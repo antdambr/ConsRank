@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "#' TauX (tau exstension) rank correlation coefficient\n#'\n#' Tau exstension is a new rank correlation coefficient defined by Emond and Mason (2002)\n#'\n#' @param X a M by N data matrix, in which there are N judges and M objects to be judged. Each row is a ranking of the objects which are represented by the columns. If there is only X as input, the output is a square matrix containing the Tau_X rcc.\n#' @param Y A row vector, or a n by M data matrix in which there are n judges and the same M objects as X to be judged.\n#'\n#' @return Tau_x rank correlation coefficient\n#'\n#' @references Emond, E. J., and Mason, D. W. (2002). A new rank correlation coefficient with application to the consensus ranking problem. Journal of Multi-Criteria Decision Analysis, 11(1), 17-28.\n#' \n#' @author Antonio D'Ambrosio \\email{antdambr@unina.it}\n#' \n#' @seealso \\code{\\link{kemenyd}} Kemeny distance\n#' \n#' @keywords TauX rank correlation coefficient\n#' \n#' @examples\n#' data(BU)\n#' RD=BU[,1:3]\n#' Tau=Tau_X(RD)\n#' Tau1_3=Tau_X(RD[1,],RD[3,])\n#' \n#' @export \n\n\nTau_X = function(X,Y=NULL) {\n  \n  if(is.numeric(X) & !is.matrix(X)){\n    X=matrix(X,ncol=length(X))\n  }\n  \n  \n  N=ncol(X)\n  maxd=N*(N-1)\n  if (is.null(Y)){\n    d=kemenyd(X)\n    tau = 1-(2*d/maxd)\n  } else {\n    if(is.numeric(Y) & !is.matrix(Y)){\n      Y=matrix(Y,ncol=length(Y))\n    }\n    d=kemenyd(X,Y)\n    tau = 1-(2*d/maxd)\n  }\n  tau \n}\n\n",
+    "created" : 1493390699772.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "544162769",
+    "id" : "C99E9D1F",
+    "lastKnownWriteTime" : 1491572641,
+    "last_content_update" : 1491572641,
+    "path" : "~/R projects Antonio/ConsRank/R/Tau_X.R",
+    "project_path" : "R/Tau_X.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 28,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

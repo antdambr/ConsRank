@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1575532216853.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3260058451",
+    "id" : "C92AC864",
+    "lastKnownWriteTime" : 1575532224,
+    "last_content_update" : 1575532224744,
+    "path" : "C:/Users/Antonio/Dropbox/Disco D/R projects Antonio/ConsRank/man/Idea.Rd",
+    "project_path" : "man/Idea.Rd",
+    "properties" : {
+        "cursorPosition" : "19,38",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 11,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_doc"
+}

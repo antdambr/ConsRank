@@ -1,0 +1,16 @@
+{
+    "contents" : "\\name{ConsRank-package}\n\\alias{ConsRank-package}\n\\alias{ConsRank}\n\\docType{package}\n\\title{\nCompute the consensus (or median) ranking according the Kemeny's axiomatic approach.\n}\n\\description{\nCompute the consensus (or median) ranking according the Kemeny's axiomatic approach. Rankings can or cannot contain ties, rankings can be both complete or uncomplete.  \n}\n\\details{\n\\tabular{ll}{\nPackage: \\tab ConsRank\\cr\nType: \\tab Package\\cr\nVersion: \\tab 0.0\\cr\nDate: \\tab 2015-03-26\\cr\nLicense: \\tab GPL-3\\cr\n}\n\n}\n\\author{\nAntonio D'Ambrosio <antdambr@unina.it> and Sonia Amdio <sonia.amodio@unina.it>\n\nMaintainers: Antonio D'Ambrosio <antdambr@unina.it> and Sonia Amdio <sonia.amodio@unina.it>\n}\n\\references{\nKemeny, J. G., & Snell, J. L. (1962). Mathematical models in the social sciences (Vol. 9). New York: Ginn.\n\nMarden, J. I. (1996). Analyzing and modeling rank data. CRC Press.\n\nEmond, E. J., & Mason, D. W. (2002). A new rank correlation coefficient with application to the consensus ranking problem. Journal of Multi-Criteria Decision Analysis, 11(1), 17-28.\n\nHeiser, W. J., & D'Ambrosio, A. (2013). Clustering and prediction of rankings within a Kemeny distance framework. In Algorithms from and for Nature and Life (pp. 19-31). Springer International Publishing.\n\nAmodio, S., D'Ambrosio, A., & Siciliano, R. (2015). A Fast accurate heuristic algorithm for the consensus ranking problem. Submitted. Technical report available as arXiv preprint arXiv:1502.06498.\n}\n%~~ Optionally other standard keywords, one per line, from file KEYWORDS in the R ~~\n%~~ documentation directory ~~\n\\keyword{ package }\n\n\\examples{\ndata(APAFULL)\nCR=EMCons(APAFULL)\n\ndata(EMD)\nX=EMD[,1:15]\nWk=EMD[,16]\nCR=FASTcons(X,Wk,maxiter=100)\n\ndata(sports)\nCR=QuickCons(sports)\n\n}\n",
+    "created" : 1427805334799.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2182290699",
+    "id" : "EFC6B330",
+    "lastKnownWriteTime" : 1427806151,
+    "path" : "~/R projects Antonio/ConsRank/man/ConsRank-package.Rd",
+    "project_path" : "man/ConsRank-package.Rd",
+    "properties" : {
+    },
+    "source_on_save" : true,
+    "type" : "r_doc"
+}

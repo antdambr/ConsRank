@@ -1,0 +1,16 @@
+{
+    "contents" : "\\name{kemenyd}\n\\alias{kemenyd}\n%- Also NEED an '\\alias' for EACH other topic documented here.\n\\title{\nKemeny distance\n}\n\\description{\nCompute the Kemeny distance of a data matrix containing preference rankings, or compute the kemeny distance between two (matrices containing) rankings. \n}\n\\usage{\nkemenyd(X, Y = NULL)\n}\n%- maybe also 'usage' for other objects documented here.\n\\arguments{\n  \\item{X}{\nA N by M data matrix, in which there are N judges and M objects to be judged. Each row is a ranking of the objects which are represented by the columns. \nIf there is only X as input, the output is a square distance matrix\n\n}\n  \\item{Y}{\nA row vector, or a n by M data matrix in which there are n judges and the same M objects as X to be judged.\n}\n}\n\n\\value{\nIf there is anly X as input, d = square distance matrix.\n\nIf there is also Y as input, d = matrix with N rows and n columns.\n%%  If it is a LIST, use\n%%  \\item{comp1 }{Description of 'comp1'}\n%%  \\item{comp2 }{Description of 'comp2'}\n%% ...\n}\n\\references{\nKemeny, J. G., & Snell, L. J. (1962). Preference ranking: an axiomatic approach. Mathematical models in the social sciences, 9-23.\n}\n\\author{\nAntonio D'Ambrosio <antdambr@unina.it>\n}\n\n\n%% ~Make other sections like Warning with \\section{Warning }{....} ~\n\n\\seealso{\nTau_X\n}\n\\examples{\ndata(Idea)\nKD=kemenyd(Idea)\n\nKD2=kemenyd(Idea[1:10,],Idea[55,])\n\n}\n% Add one or more standard keywords, see file 'KEYWORDS' in the\n% R documentation directory.\n\\keyword{ Kemeny distance }\n\n",
+    "created" : 1427805556024.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2181051006",
+    "id" : "7647A808",
+    "lastKnownWriteTime" : 1427716009,
+    "path" : "~/R projects Antonio/ConsRank/man/kemenyd.Rd",
+    "project_path" : "man/kemenyd.Rd",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_doc"
+}

@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1575529127212.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "928715306",
+    "id" : "B4EAF046",
+    "lastKnownWriteTime" : 1575532476,
+    "last_content_update" : 1575532476705,
+    "path" : "C:/Users/Antonio/Dropbox/Disco D/R projects Antonio/ConsRank/R/consrank.R",
+    "project_path" : "R/consrank.R",
+    "properties" : {
+        "cursorPosition" : "1498,4",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 6,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

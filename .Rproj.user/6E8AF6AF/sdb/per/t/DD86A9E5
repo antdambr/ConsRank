@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "#' Differential Evolution algorithm for Median Ranking\n#'\n#' Differential evolution algorithm for median ranking detection. \n#' It works with full, tied and partial rankings. The solution con be\n#' constrained to be a full ranking or a tied ranking\n#'\n#' @param X A N by M data matrix, in which there are N judges and M objects to be judged. Each row is a ranking of the objects which are represented by the columns. Alternatively X can contain the rankings observed only once. In this case the argument Wk must be used\n#' @param Wk Optional: the frequency of each ranking in the data\n#' @param NP The number of population individuals\n#' @param L Generations limit: maximum number of consecutive generations without improvement\n#' @param FF The scaling rate for mutation. Must be in [0,1]\n#' @param CR The crossover range. Must be in [0,1]\n#' @param FULL Default FULL=FALSE. If FULL=TRUE, the searching is limited to the space of full rankings.\n#' \n#' @return a \"list\" containing the following components:\n#' \\tabular{lll}{\n#' Consensus \\tab  \\tab the Consensus Ranking\\cr\n#' Tau \\tab       \\tab averaged TauX rank correlation coefficient\\cr\n#' Eltime\\tab   \\tab Elapsed time in seconds}\n#' \n#' @author Antonio D'Ambrosio \\email{antdambr@unina.it} and Giulio Mazzeo \\email{giuliomazzeo@gmail.com}\n#' \n#' @details It works with a very large number of items to be ranked. Empirically, the number\n#' of population individuals (the NP parameter) can be set equal to 10, 20 or 30\n#' for problems till 20, 50 and 100 items. Both scaling rate and crossover ratio (parameters\n#' FF and CR) must be set by the user. The default options (FF=0.4, CR=0.9) work well\n#' for a large variety of data sets\n#' \n#' @references D'Ambrosio, A., Mazzeo, G., Iorio, C., and Siciliano, R. (2017). A differential evolution algorithm for finding the median ranking under the Kemeny axiomatic approach. Computers and Operations Research, vol. 82, pp. 126-138. \n#' \n#' @keywords Differential evolution\n#' @keywords Median ranking\n#' @keywords Genetic algorithms\n#' \n#' @seealso \\code{\\link{FASTcons}} FAST algorithm.\n#' @seealso \\code{\\link{QuickCons}} Quick algorithm.\n#' @seealso \\code{\\link{EMCons}} Branch-and-bound algorithm.\n#' \n#' @examples \n#' data(EMD)\n#' CR=DECOR(EMD[,1:15],EMD[,16])\n#' \n#' @export\n#' \n\n\nDECOR = function(X,Wk=NULL,NP=15,L=100,FF=0.4,CR=0.9,FULL=FALSE){\n\n  #check if X is a matrix\n  if (class(X)==\"data.frame\") {\n    #colnames(X)=NULL\n    X=as.matrix(X)\n  }\n  \n  M = nrow(X)\n  N=ncol(X)\n  tic = proc.time()[3]  \n  \n  #check if there are trivial solutions\n  \n  if (M==1) { \n    consensus = X\n    TauX = 1\n    \n  } else {\n    \n    if (!is.null(Wk)) {\n      \n      if (is.numeric(Wk)) {\n        Wk=matrix(Wk,ncol=1)\n        NJ=sum(Wk)\n      }\n      \n      cij = combinpmatr(X,Wk)\n      \n    } else {\n      \n      cij = combinpmatr(X)\n      NJ=nrow(X)\n    }\n    \n    \n    if (sum(cij==0)==length(cij)){\n      print(\"Combined Input Matrix contains only zeros: any ranking in the reference universe is a median ranking\")\n      return()\n      \n    } \n    \n    if (sum(sign(cij+diag(N)))==length(cij)){\n      print(\"Combined Input Matrix contains only positive values: the median ranking is the all-tie solution\")\n      return()\n      \n    }\n    \n    \n    COR=DECORcore(cij,NJ,NP,L,FF,CR,FULL)\n    \n    Consensus=COR$ConsR\n    TauX=COR$Tau\n    colnames(Consensus)=colnames(X) \n    row.names(Consensus)=NULL\n    \n    \n    \n    \n  }\n  toc=proc.time()[3]\n  eltime=toc-tic\n  return(list(Consensus=reordering(Consensus), Tau=TauX, Eltime=eltime) )\n}\n",
+    "created" : 1491654321007.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2769449203",
+    "id" : "DD86A9E5",
+    "lastKnownWriteTime" : 1492787170,
+    "last_content_update" : 1492787170174,
+    "path" : "~/R projects Antonio/ConsRank/R/DECOR.R",
+    "project_path" : "R/DECOR.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

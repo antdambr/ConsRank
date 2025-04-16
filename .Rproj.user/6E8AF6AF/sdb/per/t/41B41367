@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "#' Auxliary code recalled by other routines\n#'\n#' Branches discovery \n#'\n#' @param brR Current processed branche of the BB algorithm\n#' @param cij Combined input matrix\n#' @param b Other inputs recalled by main functions\n#' @param Po Other inputs recalled by main functions\n#' @param ord Other inputs recalled by main functions\n#' @param Pb Other inputs recalled by main functions\n#' @param FULL Default FULL=FALSE. If FULL=TRUE, the searching is limited to the space of complete rankings. TRUE=TRUE if the function is called by BBFULL algorithm.\n#' \n#' @return a \"list\" containing the following components:\n#' \\tabular{lll}{\n#' cR \\tab  \\tab ranking belonging to the branche\\cr\n#' pcR \\tab       \\tab penalty of the current ranking}\n#'\n#' @author Antonio D'Ambrosio \\email{antdambr@unina.it}\n#' \n#' @export\n\n\nbranches = function(brR,cij,b,Po,ord,Pb,FULL=FALSE) {\n  \n  candidate = findbranches(brR,ord,b,FULL)\n  Pb =matrix( rep(Pb,nrow(candidate)))\n  \n  CR=mat.or.vec(nrow(candidate),ncol(candidate))\n  addpenalty=matrix(0,nrow(candidate),1)\n  QR=mat.or.vec(nrow(candidate),ncol(candidate))\n  \n  for (gm in 1:nrow(candidate)) {\n    \n    CR[gm,]=candidate[gm,]\n    addpenalty[gm,]=PenaltyBB2(cij,candidate[gm,],ord[b])\n    \n    if ( (Pb[gm]+addpenalty[gm,]) > Po) {\n      \n#      CR[gm,]=-10.0e+15\n#      addpenalty[gm]=-10.0e+15\n      CR[gm,]=NA\n      addpenalty[gm,]=NA      \n      \n    }\n    QR[gm,]=CR[gm,]\n  }\n  Pbr=addpenalty+Pb\n#  idp=Pbr<0\n  idp=which(is.na(Pbr))\n  \n  if (length(idp)==0) {\n    \n    R=QR\n    \n  } else if (length(idp)==nrow(QR)) {\n    \n    Pbr=NULL\n    Pb=NULL\n    R=NULL\n    \n  } else {\n#    Pbr=t(matrix(Pbr[idp==FALSE,],1))\n#    if (sum(idp==F)==1) {\n#      R=t(matrix(QR[idp==FALSE,]))\n#    } else {\n#      R=QR[idp==FALSE,]\n#    }\n    \n    Pbr=matrix(Pbr[-idp],length(Pbr[-idp]),1)\n    R=QR[-idp,]\n    if (is.null(nrow(R))){R=matrix(R,1,length(R))}\n    \n  }\n  \n  return(list(cR=R,pcR=Pbr))\n}\n",
+    "created" : 1492611808106.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1025242258",
+    "id" : "41B41367",
+    "lastKnownWriteTime" : 1492616312,
+    "last_content_update" : 1492616312307,
+    "path" : "~/R projects Antonio/ConsRank/R/branches.R",
+    "project_path" : "R/branches.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 16,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

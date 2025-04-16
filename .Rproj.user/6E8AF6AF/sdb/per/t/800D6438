@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "#' Auxiliary function\n#'\n#' Apply discretization and convert to rank\n#'\n#' @param r a candidate rank vector\n#' \n#' @return a ranking\n#' \n#' @author Antonio D'Ambrosio \\email{antdambr@unina.it} and Giulio Mazzeo \\email{giuliomazzeo@gmail.com}\n#' \n#' @export\n\nchildtie = function( r ){\n  \n  #CHILDTIE Summary of this function goes here\n  #   Detailed explanation goes here\n  o = matrix(rank(r,ties.method=\"average\"),1,ncol(r))\n  o = reordering(o)\n  o\n  \n}",
+    "created" : 1491673607033.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4236401291",
+    "id" : "800D6438",
+    "lastKnownWriteTime" : 1491673717,
+    "last_content_update" : 1491673717753,
+    "path" : "~/R projects Antonio/ConsRank/R/childtie.R",
+    "project_path" : "R/childtie.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

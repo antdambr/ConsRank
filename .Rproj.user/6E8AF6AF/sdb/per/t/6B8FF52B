@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "#' Combined input matrix of a data set\n#' \n#' Compute the Combined input matrix of a data set as defined by Emond and Mason (2002)\n#' \n#' @param X A data matrix N by M, in which there are N judges and M objects to be judged. Each row is a ranking of the objects which are represented by the columns. Alternatively X can contain the rankings observed only once. In this case the argument Wk must be used\n#' @param Wk Optional: the frequency of each ranking in the data\n#' \n#' @return The M by M combined input matrix\n#' \n#' @examples\n#' data(APAred) \n#' CI=combinpmatr(APAred) \n#' TR=tabulaterows(APAred) \n#' CI=combinpmatr(TR$X,TR$Wk)\n#' \n#' @author Antonio D'Ambrosio \\email{antdambr@unina.it}\n#' \n#' @references Emond, E. J., and Mason, D. W. (2002). A new rank correlation coefficient with application to the consensus ranking problem. Journal of Multi-Criteria Decision Analysis, 11(1), 17-28.\n#' \n#' @seealso \\code{\\link{tabulaterows}} frequency distribution of a ranking data.\n#' \n#' @export\n\n\ncombinpmatr = function (X,Wk=NULL) {\n  \n  ### COMBINED INPUT MATRIX as defined by Emond and Mason\n  \n  if (is.null(Wk)) {\n    #X must be data matrix with n judges (on the rows) ranking m objects (on the columns)\n    CI=matrix(0,ncol(X), ncol(X))\n    colnames(CI)=colnames(X)\n    row.names(CI)=colnames(X)\n    for (i in 1:nrow(X)){\n      sm=scorematrix(t(as.matrix(X[i,])))\n      CI=CI+sm\n    }\n  } else {\n    \n    if (is.numeric(Wk)) {\n      Wk=matrix(Wk,ncol=1)\n    }\n    \n    CI=matrix(0,ncol(X), ncol(X))\n    colnames(CI)=colnames(X)\n    row.names(CI)=colnames(X)    \n    for (i in 1:nrow(X)){\n      sm=scorematrix(t(as.matrix(X[i,])))*Wk[i]\n      CI=CI+sm\n    }\n  }\n  CI\n}\n",
+    "created" : 1492788182767.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2180563609",
+    "id" : "6B8FF52B",
+    "lastKnownWriteTime" : 1492788235,
+    "last_content_update" : 1492788235926,
+    "path" : "~/R projects Antonio/ConsRank/R/combinpmatr.R",
+    "project_path" : "R/combinpmatr.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 23,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

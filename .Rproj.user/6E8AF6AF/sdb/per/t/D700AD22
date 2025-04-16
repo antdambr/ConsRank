@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "#' Transform a ranking into a ordering. \n#'\n#' Given a ranking (or a matrix of rank data), transforms it into an ordering (or a ordering matrix)\n#'\n#' @param x a  ranking, or a n by m data matrix in which there are n judges ranking m objects\n#' @param m the number of objects\n#' @param label optional: the name of the objects\n#' @param labs labs = 1 displays the names of the objects if there is argument \"label\", otherwise displays the permutation of first m integer. labs = 2 is to be used only if the argument \"label\" is not defined. In such a case it displays the permutation of the first m letters\n#'\n#' @return the ordering\n#'\n#' @author Sonia Amodio \\email{sonia.amodio@unina.it}\n#' \n#' @examples\n#' data(Idea)\n#' TR=tabulaterows(Idea)\n#' Ord=labels(TR$X,ncol(Idea),colnames(Idea),labs=1)\n#' Ord2=labels(TR$X,ncol(Idea),labs=2)\n#' cbind(Ord,TR$Wk)\n#' cbind(Ord2,TR$Wk)\n#' \n#' @export\n\n\nlabels = function(x, m, label = 1:m, labs ){\n  \n  ## Place labels in a data matrix X of rankings (N judges by M objects)\n  #m is the number of objects\n  #label (optional) is the vector of the objects names\n  #labs = 1 or 2\n  #source('reordering.r')\n  # if the class of the object is different from 'matrix' transform it in 'matrix'\n  if(class(x) != 'matrix'){\n    obs = length(x)\n    XX = matrix(x, ncol = obs)\n  } else {\n    XX = x\n  }\n  \n  nj = nrow(XX)\n  nob = ncol(XX)\n  \n  ## if length of the object is higher than m, last number is the penalty\n  #if(nob > m){\n  ## if the number of rows is 1 is a vector\n  #  if(nj == 1){\n  #    pens = x[m+1]\n  #    X = matrix(reordering(XX[1:m]), m, ncol = m)\n  #    } else {\n  #    pens = x[,m+1]\n  #    X = t(apply(x, 1, function(g) reordering(g, m)))\n  #    }\n  #} else {\n  X = XX\n  #}\n  if(labs ==1){\n    let = label\n  } else if(labs == 2){\n    let = LETTERS[label]\n  }\n  \n  out = rep(0, nj)\n  for(i in 1:nj){\n    \n    ord = rank(X[i,])\n    orders = tapply(let, ord, sort)\n    \n    names1 = NULL\n    for(j in 1:length(orders)){\n      if(length(orders[[j]]) > 1){\n        nams = paste('(', paste(orders[[j]], sep = '', collapse = ' '), ')', sep = '', collapse='')\n      } else {\n        nams = paste(orders[[j]], collapse = ' ')\n      }\n      names1 = c(names1, nams)\n    }\n    out[i] = paste(names1, collapse = ' ' )\n  }\n  out = matrix(out, nrow = nj)\n  \n  #if(nob > m){\n  #dat = data.frame(data = out, pens = pens)\n  #} else {\n  dat = out\n  #}\n  \n  return(dat)\n}\n",
+    "created" : 1492613254565.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1200008902",
+    "id" : "D700AD22",
+    "lastKnownWriteTime" : 1492613480,
+    "last_content_update" : 1492613480520,
+    "path" : "~/R projects Antonio/ConsRank/R/labels.R",
+    "project_path" : "R/labels.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 20,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "#' Apply the (binomial) crossover for DE algorithm\n#'\n#' Binomial crossover stipulates that crossover will occur on each \n#' of the D values in a solution whenever a randomly generated number\n#' between 0 and 1 is within the CR range.\n#'\n#' @param x target ranking\n#' @param v donor individual (mutaded x)\n#' @param CR Crossover range\n#' \n#' @author Antonio D'Ambrosio \\email{antdambr@unina.it} and Giulio Mazzeo \\email{giuliomazzeo@gmail.com}\n#'\n#' @return modified ranking\n#' \n#' @importFrom stats runif\n#' \n#' @export\n\n\ncrossover=function(x,v,CR){\n  \n  \n  if (!is.matrix(x)){x=matrix(x,1,length(x))}\n  \n  D = ncol(x)\n  \n  u = matrix(0,1,D)\n  \n  for (i in 1:D){\n    \n    if (runif(1) > CR){\n      \n      u[i] = v[i]\n    }\n    else{\n      \n      u[i] = x[i]\n      \n    }\n  }\n  u\n}",
+    "created" : 1491673118633.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3574868322",
+    "id" : "7C537C0F",
+    "lastKnownWriteTime" : 1491688200,
+    "last_content_update" : 1491688200780,
+    "path" : "~/R projects Antonio/ConsRank/R/crossover.R",
+    "project_path" : "R/crossover.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

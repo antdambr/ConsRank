@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1575269607870.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1216355365",
+    "id" : "A79D7EDE",
+    "lastKnownWriteTime" : 1575481891,
+    "last_content_update" : 1575481891,
+    "path" : "C:/Users/Antonio/Dropbox/Disco D/R projects Antonio/ConsRank/R/partitions.R",
+    "project_path" : "R/partitions.R",
+    "properties" : {
+        "cursorPosition" : "27,36",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

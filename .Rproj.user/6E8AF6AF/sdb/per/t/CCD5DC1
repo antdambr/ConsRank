@@ -1,0 +1,29 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1493295590473.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "CCD5DC1",
+    "lastKnownWriteTime" : 0,
+    "last_content_update" : 1493295590473,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cacheKey" : "CFD9861D",
+        "caption" : "ErrSPCA",
+        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=ErrSPCA&cache_key=CFD9861D",
+        "displayedObservations" : 53,
+        "environment" : "",
+        "object" : "ErrSPCA",
+        "preview" : 0,
+        "totalObservations" : 53,
+        "variables" : 1
+    },
+    "relative_order" : 25,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_dataframe"
+}

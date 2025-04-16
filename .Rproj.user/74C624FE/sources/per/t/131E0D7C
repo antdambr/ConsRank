@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1575268491054.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "915946806",
+    "id" : "131E0D7C",
+    "lastKnownWriteTime" : 1575483585,
+    "last_content_update" : 1575483585,
+    "path" : "C:/Users/Antonio/Dropbox/Disco D/R projects Antonio/ConsRank/R/polyplot.R",
+    "project_path" : "R/polyplot.R",
+    "properties" : {
+        "cursorPosition" : "27,33",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

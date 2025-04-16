@@ -1,0 +1,16 @@
+{
+    "contents" : "\\name{Tau_X}\n\\alias{Tau_X}\n%- Also NEED an '\\alias' for EACH other topic documented here.\n\\title{\nTau exstension rank correlation coefficient\n}\n\\description{\nTau exstension is a new rank correlation coefficient defined by Emond and Mason (2002)\n}\n\\usage{\nTau_X(X, Y = NULL)\n}\n%- maybe also 'usage' for other objects documented here.\n\\arguments{\n  \\item{X}{\na M by N data matrix, in which there are N judges and M objects to be judged. Each row is a ranking of the objects which are represented by the columns. \nIf there is only X as input, the output is a square matrix containing the Tau_X rcc.\n}\n  \\item{Y}{\nA row vector, or a n by M data matrix in which there are n judges and the same M objects as X to be judged.\n}\n}\n\n\\value{\nTau_x rank correlation coefficient\n%%  If it is a LIST, use\n%%  \\item{comp1 }{Description of 'comp1'}\n%%  \\item{comp2 }{Description of 'comp2'}\n%% ...\n}\n\\references{\nEmond, E. J., & Mason, D. W. (2002). A new rank correlation coefficient with application to the consensus ranking problem. Journal of Multi-Criteria Decision Analysis, 11(1), 17-28.  \n\n}\n\\author{\nAntonio D'Ambrosio <antdambr@unina.it>\n}\n\n\n\\seealso{\nkemenyd\n}\n\\examples{\ndata(BU)\nRD=BU[,1:3]\nTau=Tau_X(RD)\nTau1_3=Tau_X(RD[1,],RD[3,])\n\n}\n% Add one or more standard keywords, see file 'KEYWORDS' in the\n% R documentation directory.\n\\keyword{ Tau_x rank correlation coefficient }\n\n",
+    "created" : 1427805601636.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1221203909",
+    "id" : "132B1CDF",
+    "lastKnownWriteTime" : 1427805859,
+    "path" : "~/R projects Antonio/ConsRank/man/Tau_X.Rd",
+    "project_path" : "man/Tau_X.Rd",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_doc"
+}

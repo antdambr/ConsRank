@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1575268372622.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "982063322",
+    "id" : "D896B984",
+    "lastKnownWriteTime" : 1575226312,
+    "last_content_update" : 1575226312,
+    "path" : "C:/Users/Antonio/Dropbox/Disco D/R projects Antonio/Consensus Ranking_per pack/codici_partall (NO IN PACK).R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "912,0",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

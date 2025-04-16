@@ -1,0 +1,16 @@
+{
+    "contents" : "\\name{FASTcons}\n\\alias{FASTcons}\n%- Also NEED an '\\alias' for EACH other topic documented here.\n\\title{\nFAST algorith to find consensus (median) ranking according the Kemeny's axionatic approach\n}\n\\description{\nFAST algorith to find consensus (median) ranking defined by Amodio, D'Ambrosio and Siciliano (2015). It returns at least one of the solutions. If there are multiple solutions, sometimes it returns all the solutions, sometimes it returns some solutions, always it returns at least one solution.\n}\n\\usage{\nFASTcons(X, Wk = NULL, maxiter = 50)\n}\n\n\\arguments{\n  \\item{X}{\nA N by M data matrix, in which there are N judges and M objects to be judged. Each row is a ranking of the objects which are represented by the columns. \nAlternatively X can contain the rankings observed only once in the sample. In this case the argument Wk must be used\n}\n  \\item{Wk}{\nOptional: the frequency of each ranking in the data\n}\n  \\item{maxiter}{\nmaximum number of iterations: default = 50.\n}\n}\n\n\\value{\n%%  ~Describe the value returned\n%%  If it is a LIST, use\n\\item{Consensus }{Consensus ranking}\n\\item{Tau }{Tau extended rank correlation coefficient}\n\\item{Eltime }{Elapsed time in seconds}\n%% ...\n}\n\\references{\nAmodio, S., D'Ambrosio, A., & Siciliano, R. (2015). A Fast accurate heuristic algorithm for the consensus ranking problem. Submitted. Technical report available as arXiv preprint arXiv:1502.06498.\n}\n\\author{\nAntonio D'Ambrosio <antdambr@unina.it> and Sonia Amodio <sonia.amodio@unina.it>\n}\n\n\n\n\\seealso{\nEMCons\n\nQuickCons\n\n\n}\n\\examples{\ndata(EMD)\nX=EMD[,1:15]\nWk=matrix(EMD[,16],nrow=nrow(X))\nCR=FASTcons(X,Wk,100)\n\n\ndata(sports)\nCR=FASTcons(sports)\n\n\n}\n% Add one or more standard keywords, see file 'KEYWORDS' in the\n% R documentation directory.\n\\keyword{ FAST algorithm }\n\n",
+    "created" : 1427805373771.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3051096180",
+    "id" : "BE5AA717",
+    "lastKnownWriteTime" : 1427715457,
+    "path" : "~/R projects Antonio/ConsRank/man/FASTcons.Rd",
+    "project_path" : "man/FASTcons.Rd",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_doc"
+}

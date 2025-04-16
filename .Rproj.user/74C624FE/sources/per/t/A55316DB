@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1575530754049.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "923037413",
+    "id" : "A55316DB",
+    "lastKnownWriteTime" : 1575532184,
+    "last_content_update" : 1575532184204,
+    "path" : "C:/Users/Antonio/Dropbox/Disco D/R projects Antonio/ConsRank/R/EMCons.R",
+    "project_path" : "R/EMCons.R",
+    "properties" : {
+        "cursorPosition" : "9,44",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 8,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

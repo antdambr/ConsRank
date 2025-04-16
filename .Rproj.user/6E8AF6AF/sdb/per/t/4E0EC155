@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "#' Branch-and-Bound algorithm to find the median ranking in the space of full (or complete) rankings.\n#'\n#' Branch-and-bound algorithm to find consensus ranking as definned by D'Ambrosio et al. (2015). If the number of objects to be ranked is large (greater than 20 or 25), it can work for very long time. Use either QuickCons or FASTcons with the option FULL=TRUE instead\n#'\n#' @param X A N by M data matrix, in which there are N judges and M objects to be judged. Each row is a ranking of the objects which are represented by the columns. The data matrix can contain both full and tied rankings, or incomplete rankings. Alternatively X can contain the rankings observed only once. In this case the argument Wk must be used\n#' @param Wk Optional: the frequency of each ranking in the data\n#' @param PS If PS=TRUE, on the screen some information about how many branches are processed are displayed\n#'\n#' @return a \"list\" containing the following components:\n#' \\tabular{lll}{\n#' Consensus \\tab  \\tab the Consensus Ranking\\cr\n#' Tau \\tab       \\tab averaged TauX rank correlation coefficient\\cr\n#' Eltime\\tab   \\tab Elapsed time in seconds}\n#' \n#' @details If the objects to be ranked is large (>25 - 30), it can take long time to find the solutions\n#' \n#' @references D'Ambrosio, A., Amodio, S., and Iorio, C. (2015). Two algorithms for finding optimal solutions of the Kemeny rank aggregation problem for full rankings. Electronic Journal of Applied Statistical Analysis, 8(2), 198-213.\n#' \n#' @seealso \\code{\\link{FASTcons}} FAST algorithm algorithm.\n#' @seealso \\code{\\link{QuickCons}} Quick algorithm.\n#' \n#' @keywords Median ranking\n#' \n#' @examples \n#' data(APAFULL)\n#' CR=BBFULL(APAFULL)\n#' \n#' @author Antonio D'Ambrosio \\email{antdambr@unina.it}\n#' \n#' @export\n\nBBFULL = function(X,Wk=NULL,PS=TRUE)  {\n  #Branch and Bound algorithm to find median ranking in the space of full rankings\n  #X is a data matrix in which the rows are the judges and the columns indicates the objects\n  #Wk is the vector of weigths\n  if (class(X)==\"data.frame\") {\n    #colnames(X)=NULL\n    X=as.matrix(X)\n  }\n  \n  \n  \n  M = nrow(X)\n  N=ncol(X)\n  tic = proc.time()[3]\n  if (M==1) {\n    consensus = X\n    TauX = 1\n  } else {\n    if (!is.null(Wk)) {\n      \n      if (is.numeric(Wk)) {\n        Wk=matrix(Wk,ncol=1)\n      }\n      \n      cij = combinpmatr(X,Wk)\n    } else {\n      cij = combinpmatr(X)\n    }\n    \n    if (sum(cij==0)==nrow(cij)^2){\n      print(\"Combined Input Matrix contains only zeros: any ranking in the reference universe is a median ranking\")\n      return()\n      \n    } \n    \n    R=findconsensusBB(cij)\n    cons1=BBconsensus(R,cij,FULL=TRUE)\n    consensus1=cons1$cons\n    Po=cons1$pen\n    consensus=BBconsensus2(consensus1,cij,Po,PS,FULL=TRUE)\n  }\n  \n  \n  if (nrow(consensus)==1) {\n    \n    Sij=scorematrix(consensus)\n    \n    if (!is.null(Wk)){\n      TauX=sum(cij*Sij) / ( sum(Wk)* (N*(N-1)) )\n    } else {\n      TauX=sum(cij*Sij) / (  M*(N*(N-1)) )\n    }\n    \n  } else {\n    \n    TauX=matrix(0,nrow(consensus),1)\n    \n    for (k in 1:nrow(consensus)) {\n      \n      Sij=scorematrix(t(matrix(consensus[k,])))\n      \n      if (!is.null(Wk)) {\n        \n        TauX[k,1] = sum(cij*Sij) / ( sum(Wk)*(N*(N-1)) )\n        \n      } else {\n        \n        TauX[k,1] = sum(cij*Sij) / (M*(N*(N-1)))\n        \n      }\n      \n    }\n    \n  }\n  toc = proc.time()[3]\n  colnames(consensus)=colnames(X) \n  #consensus=reordering(consensus)\n  eltime=toc-tic\n  return(list(Consensus=reordering(consensus), Tau=TauX, Eltime=eltime) )\n}\n",
+    "created" : 1491685729420.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3332675629",
+    "id" : "4E0EC155",
+    "lastKnownWriteTime" : 1491685792,
+    "last_content_update" : 1491685792596,
+    "path" : "~/R projects Antonio/ConsRank/R/BBFULL.R",
+    "project_path" : "R/BBFULL.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 9,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

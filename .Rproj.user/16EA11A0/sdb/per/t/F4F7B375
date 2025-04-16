@@ -1,0 +1,16 @@
+{
+    "contents" : "\\name{Penalty}\n\\alias{Penalty}\n%- Also NEED an '\\alias' for EACH other topic documented here.\n\\title{\nAuxiliary function\n}\n\\description{\nAssign a penalty to the branches of the FASTcons amd QuickCons algorithms \n}\n\\usage{\nPenalty(CR, cij, ...)\n}\n%- maybe also 'usage' for other objects documented here.\n\\arguments{\n  \\item{CR}{\ncandidate to be the consensus ranking\n}\n  \\item{cij}{\nCombined input matrix\n}\n  \\item{...}{other input called by other functions}\n\n}\n\n\\references{\nAmodio, S., D'Ambrosio, A., & Siciliano, R. (2015). A Fast accurate heuristic algorithm for the consensus ranking problem. Submitted. Technical report available as arXiv preprint arXiv:1502.06498.\n}\n\\author{\nAntonio D'Ambrosio <antdambr@unina.it> and Sonia Amodio <sonia.amodio@unina.it>\n}\n\n",
+    "created" : 1427805565292.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2868384752",
+    "id" : "F4F7B375",
+    "lastKnownWriteTime" : 1427716306,
+    "path" : "~/R projects Antonio/ConsRank/man/Penalty.Rd",
+    "project_path" : "man/Penalty.Rd",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_doc"
+}

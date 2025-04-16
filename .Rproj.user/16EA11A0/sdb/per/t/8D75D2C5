@@ -1,0 +1,16 @@
+{
+    "contents" : "\\name{PenaltyBB2}\n\\alias{PenaltyBB2}\n%- Also NEED an '\\alias' for EACH other topic documented here.\n\\title{\nAuxiliary function\n}\n\\description{\nAssign a penalty to the branches of the BB algorithms\n}\n\\usage{\nPenaltyBB2(cij, candidate, ...)\n}\n%- maybe also 'usage' for other objects documented here.\n\\arguments{\n  \\item{cij}{\nCombined input matrix\n}\n  \\item{candidate}{\nranking candidate to be the consensus ranking\n}\n  \\item{...}{other input called by other functions}\n}\n\n\\references{\nEmond, E. J., & Mason, D. W. (2002). A new rank correlation coefficient with application to the consensus ranking problem. Journal of Multi-Criteria Decision Analysis, 11(1), 17-28.\n}\n\\author{\nAntonio D'Ambrosio <antdambr@unina.it>\n}\n\n",
+    "created" : 1427805574261.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2656764855",
+    "id" : "8D75D2C5",
+    "lastKnownWriteTime" : 1427716335,
+    "path" : "~/R projects Antonio/ConsRank/man/PenaltyBB2.Rd",
+    "project_path" : "man/PenaltyBB2.Rd",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_doc"
+}

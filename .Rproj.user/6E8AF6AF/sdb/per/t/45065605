@@ -1,0 +1,29 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1493295059033.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "45065605",
+    "lastKnownWriteTime" : 2,
+    "last_content_update" : 1493295059033,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cacheKey" : "7F425CD1",
+        "caption" : "perperm",
+        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=perperm&cache_key=7F425CD1",
+        "displayedObservations" : 53,
+        "environment" : "",
+        "object" : "perperm",
+        "preview" : 0,
+        "totalObservations" : 53,
+        "variables" : 2
+    },
+    "relative_order" : 24,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_dataframe"
+}

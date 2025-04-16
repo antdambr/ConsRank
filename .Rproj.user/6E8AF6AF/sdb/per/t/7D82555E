@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "\\name{ConsRank-package}\n\\alias{ConsRank-package}\n\\alias{ConsRank}\n\\docType{package}\n\\title{\nCompute the Median Ranking According to the Kemeny's Axiomatic Approach\n}\n\\description{\nCompute the median ranking according to the Kemeny's axiomatic approach. Rankings can or cannot contain ties, rankings can be both complete or incomplete. The package contains both branch-and-bound and heuristic solutions\n}\n\\details{\n\\tabular{ll}{\nPackage: \\tab ConsRank\\cr\nType: \\tab Package\\cr\nVersion: \\tab 2.0.1\\cr\nDate: \\tab 2017-04-28\\cr\nLicense: \\tab GPL-3\\cr\n}\n\n}\n\\author{\nAntonio D'Ambrosio <antdambr@unina.it>, Sonia Amdio <sonia.amodio@unina.it>, Giulio Mazzeo <giuliomazzeo@gmail.com>\n\nMaintainer: Antonio D'Ambrosio <antdambr@unina.it>\n}\n\\references{\nKemeny, J. G., & Snell, J. L. (1962). Mathematical models in the social sciences (Vol. 9). New York: Ginn.\n\nMarden, J. I. (1996). Analyzing and modeling rank data. CRC Press.\n\nEmond, E. J., & Mason, D. W. (2002). A new rank correlation coefficient with application to the consensus ranking problem. Journal of Multi-Criteria Decision Analysis, 11(1), 17-28.\n\nD'Ambrosio, A. (2008). Tree based methods for data editing and preference rankings. Ph.D. thesis. \\url{http://www.fedoa.unina.it/id/eprint/2746}\n\nHeiser, W. J., & D'Ambrosio, A. (2013). Clustering and prediction of rankings within a Kemeny distance framework. In Algorithms from and for Nature and Life (pp. 19-31). Springer International Publishing.\n\nAmodio, S., D'Ambrosio, A. & Siciliano, R (2016). Accurate algorithms for identifying the median ranking when dealing with weak and partial rankings under the Kemeny axiomatic approach. European Journal of Operational Research, vol. 249(2).\n\nD'Ambrosio, A., Amodio, S. & Iorio, C. (2015). Two algorithms for finding optimal solutions of the Kemeny rank aggregation problem for full rankings. Electronic Journal of Applied Statistical Analysis, vol. 8(2).\n\nD'Ambrosio, A., Mazzeo, G., Iorio, C., & Siciliano, R. (2017). A differential evolution algorithm for finding the median ranking under the Kemeny axiomatic approach. Computers & Operations Research, vol. 82.\n}\n%~~ Optionally other standard keywords, one per line, from file KEYWORDS in the R ~~\n%~~ documentation directory ~~\n\\keyword{ Median ranking }\n\\keyword{ Consensus ranking }\n\\keyword{ Kemeny distance }\n\\keyword{ Tau_X rank correlation coefficient }\n\\keyword{ Branch-and-bound algorithms }\n\\keyword{ Differential evolution algorithms }\n\n\\examples{\n## load APA data set, full version\ndata(APAFULL)\n## Emond and Mason Branch-and-Bound algorithm. \n## If the number of object is higher than 20, EMCons function may work for several minutes. \n## Use either QuickCons, DECOR, FASTcons or FASTDECOR instead\nCR=EMCons(APAFULL)\nTR=tabulaterows(APAFULL)\nCR2=FASTcons(TR$X,TR$Wk,maxiter=5)\nCR3=QuickCons(TR$X,TR$Wk)\nCR4=DECOR(TR$X,TR$Wk)\n\n#####################################\n### load sports data set\n#data(sports)\n### FAST algorithm\n#CR=FASTcons(sports,maxiter=10)\n#####################################\n\n#######################################\n### load Emond and Mason data set\n#data(EMD)\n### matrix X contains rankings\n#X=EMD[,1:15]\n### vector Wk contains frequencies\n#Wk=EMD[,16]\n### QUICK algorithm\n#CR=QuickCons(X,Wk)\n#######################################\n\n}\n",
+    "created" : 1491686608569.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2973788808",
+    "id" : "7D82555E",
+    "lastKnownWriteTime" : 1493389432,
+    "last_content_update" : 1493389432311,
+    "path" : "~/R projects Antonio/ConsRank/man/ConsRank-package.Rd",
+    "project_path" : "man/ConsRank-package.Rd",
+    "properties" : {
+    },
+    "relative_order" : 13,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_doc"
+}

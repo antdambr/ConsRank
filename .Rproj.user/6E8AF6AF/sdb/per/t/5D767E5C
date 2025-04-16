@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "#' Kemeny distance\n#'\n#' Compute the Kemeny distance of a data matrix containing preference rankings, or compute the kemeny distance between two (matrices containing) rankings.\n#'\n#' @param X A N by M data matrix, in which there are N judges and M objects to be judged. Each row is a ranking of the objects which are represented by the columns. If there is only X as input, the output is a square distance matrix\n#' @param Y A row vector, or a n by M data matrix in which there are n judges and the same M objects as X to be judged.\n#'\n#' @return If there is only X as input, d = square distance matrix. If there is also Y as input, d = matrix with N rows and n columns.\n#'\n#' @references Kemeny, J. G., & Snell, L. J. (1962). Preference ranking: an axiomatic approach. Mathematical models in the social sciences, 9-23.\n#' \n#' @author Antonio D'Ambrosio \\email{antdambr@unina.it}\n#' \n#' @seealso \\code{\\link{Tau_X}} TauX rank correlation coefficient\n#' \n#' @examples\n#' data(Idea)\n#' RevIdea=6-Idea ##as 5 means \"most associated\", it is necessary compute the reverse \n#' #ranking of each rankings to have rank 1 = \"most associated\" and rank 5 = \"least associated\"\n#' KD=kemenyd(RevIdea)\n#' KD2=kemenyd(RevIdea[1:10,],RevIdea[55,])\n#' \n#' @keywords Kemeny distance\n#' \n#' @export\n#' \n#' @import proxy\n\n\nkemenyd = function(X,Y=NULL) {\n  \n  ##Kemeny Distance\n  \n  if (is.numeric(X) & !is.matrix(X)) {\n    X=matrix(X,ncol=length(X))\n  }\n  \n  if (is.null(Y)) {\n    X = kemenydesign(X)\n    d=dist(X,\"manhattan\")\n  } else {\n    \n    if (is.numeric(Y) & !is.matrix(Y)) {\n      Y=matrix(Y,ncol=length(Y))\n    }\n    \n    \n    X=kemenydesign(X)\n    Y=kemenydesign(Y)\n    d=dist(X,Y,\"manhattan\")\n  }\n  d\n}\n",
+    "created" : 1493390666282.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4241262192",
+    "id" : "5D767E5C",
+    "lastKnownWriteTime" : 1493390688,
+    "last_content_update" : 1493390688746,
+    "path" : "~/R projects Antonio/ConsRank/R/kemenyd.R",
+    "project_path" : "R/kemenyd.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 27,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

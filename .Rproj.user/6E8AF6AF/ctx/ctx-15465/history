@@ -1,0 +1,512 @@
+x[ix] = C[sample(length(ix))]
+} #end else
+} #end for
+x = round(r)
+for (i in 1:D){
+if (x[i]>D | x[i]<1){
+r = sample(D)
+x[i] = r[1]
+}
+# correct duplicates
+C = setdiff(union(x,1:D),intersect(x,1:D))
+print(C)
+print(i)
+if (length(C==0)){
+x=x
+}
+else
+{
+U = unique(x)
+id = which(!duplicated(x))
+ix = setdiff(union(id,1:D),intersect(id,1:D))
+x[ix] = C[sample(length(ix))]
+} #end else
+} #end for
+x = round(r)
+for (i in 1:D){
+if (x[i]>D | x[i]<1){
+r = sample(D)
+x[i] = r[1]
+}
+# correct duplicates
+C = setdiff(union(x,1:D),intersect(x,1:D))
+print(C)
+print(i)
+if (length(C)==0){
+x=x
+}
+else
+{
+U = unique(x)
+id = which(!duplicated(x))
+ix = setdiff(union(id,1:D),intersect(id,1:D))
+x[ix] = C[sample(length(ix))]
+} #end else
+} #end for
+x
+source('~/R projects Antonio/Consensus Ranking_per pack/DECOR.R')
+Co=DECOR(cij,NJ,FULL=TRUE)
+Co
+source('~/R projects Antonio/Consensus Ranking_per pack/DECOR.R')
+source('~/R projects Antonio/Consensus Ranking_per pack/DECOR.R')
+cij
+sugn(cij)
+sign(cij)
+sum(sign(cij))
+diag(cij)
+cij+diag(15)
+sign(cij)
+sign(cij+diag(15))
+sum(sign(cij+diag(15)))
+nrow(cij)^2
+length(cij)
+Co=DECOR(cij,NJ,FULL=TRUE)
+Co
+Eltime=toc-tic
+source('~/R projects Antonio/Consensus Ranking_per pack/DECOR.R')
+Co=DECOR(EMD[,1:15],EMD[,16])
+source('~/R projects Antonio/Consensus Ranking_per pack/DECOR.R')
+Co=DECOR(EMD[,1:15],EMD[,16])
+Co
+source('~/R projects Antonio/Consensus Ranking_per pack/DECOR.R')
+Co=DECOR(EMD[,1:15],EMD[,16])
+Co
+Co=DECOR(EMD[,1:15],EMD[,16])
+Co
+source('~/R projects Antonio/Consensus Ranking_per pack/DECOR.R')
+Co=DECOR(EMD[,1:15],EMD[,16])
+Co
+Co=DECORcore(cij,NJ)
+Co
+names(Co)
+Co$avgTau
+Co$bestT
+Co$bestc
+source('~/R projects Antonio/Consensus Ranking_per pack/DECOR.R')
+Co=DECORcore(cij,NJ)
+source('~/R projects Antonio/Consensus Ranking_per pack/DECOR.R')
+Co=DECORcore(cij,NJ)
+Co$bestT
+length(Co$bestT)
+length(Co$besti)
+nrow(Co$besti)
+nrow(Co$bestT)
+nrow(Co$bests)
+source('~/R projects Antonio/Consensus Ranking_per pack/DECOR.R')
+Co=DECORcore(cij,NJ)
+Co
+Co$bestT
+nrow(Co$bestT)
+nrow(Co$avgTau)
+Co$avgTau
+nrow(Co$bestT)
+bestT
+source('~/R projects Antonio/Consensus Ranking_per pack/DECOR.R')
+Co
+Co=DECORcore(cij,NJ)
+nrow(Co$bestT)
+nrow(Co$besti)
+nrow(Co$bests)
+(Co$bests)
+FULL
+FULL=FALSE
+N=nrow(cij)        # number of objects
+costs       = matrix(0,1,NP)  # array of initial costs
+NJ
+population = matrix(0,(NP-1),N)
+for (k in 1:(NP-1)){ population[k,] = sample(N)}
+population=rbind(population,findconsensusBB(cij))
+if (FULL==TRUE){
+population[NP,]=order(population[NP,])
+}
+costs=matrix(0,NP,1)
+taos=costs
+for (i in 1:NP){
+COTA=combincost(population[i,],cij,NJ)
+costs[i]=COTA$cp
+taos[i]=COTA$tp
+}
+bestc = min(costs)
+bestind = which(costs==min(costs))
+bestT = max(taos)
+besti=population[bestind,]
+g = 2
+no_gain = 0
+while (no_gain < L){
+# individuals mutation
+for (i in 1:NP){
+# apply mutation
+evolution = mutaterand1(population,FF,i);
+# apply crossover
+evolution = crossover(population[i,],evolution,CR)
+# apply discretization and convert to rank
+if (FULL==TRUE){
+evolution=order(evolution)}
+else{
+evolution = childtie(evolution)
+}
+# apply selection, hold the best individual
+COTAN = combincost(evolution,cij,NJ)
+cost_new=COTAN$cp
+ta_new=COTAN$tp
+if (cost_new < costs[i]){
+population[i,] = evolution
+costs[i] = cost_new
+taos[i]=ta_new
+}
+}
+# store the best individual of current generation
+bestco = min(costs)
+bestc=rbind(bestc,bestco)
+bestind = which.min(costs)
+bestTa = max(taos)
+bestT=rbind(bestT,bestTa)
+bestin=population[bestind,]
+besti=rbind(besti,bestin)
+# check if this generation improved solutions
+if (bestc[g] == bestc[(g-1)]){
+no_gain = no_gain + 1}
+else{
+no_gain = 0
+}
+# next generation
+g = g + 1
+} #end while
+which(bestc==min(bestc))
+indexes = which(bestc==min(bestc))
+length(indexes)
+length(bestc)
+bests=matrix(0,length(indexes),NP)
+for (j in 1:length(indexes)){
+bests[j,]=childclosint(besti[indexes[j],])
+} #end for
+if (length(indexes)==1){ #if2
+bests=childclosint(matrix(besti[indexes,],1,N))}
+bests
+length(indexes)==1
+bests=matrix(0,length(indexes),NP)
+for (j in 1:length(indexes)){
+bests[j,]=childclosint(besti[indexes[j],])
+} #end for
+indexes
+length(besti)
+nrow(besti)
+nrow(indexes)
+length(indexes)
+indexes
+j=1
+besti[indexes[j],]
+childclosint(besti[indexes[j],])
+class(childclosint(besti[indexes[j],]))
+besti[indexes[j],]
+class(besti[indexes[j],])
+childclosint(as.vector(besti[indexes[j],]))
+source('~/R projects Antonio/Consensus Ranking_per pack/DECOR.R')
+childclosint(as.vector(besti[indexes[j],]))
+bests=matrix(0,length(indexes),NP)
+for (j in 1:length(indexes)){
+bests[j,]=childclosint(besti[indexes[j],])
+} #end for
+bests
+avgTau = bestT[indexes]
+avgTau
+length(avgTau)
+nrow(bests)
+bests
+unique(bests)
+avgTau
+diff(avgTau)
+ConsR=unique(bests)
+nrow(ConsR)
+rep(avgTau[1],6)
+source('~/R projects Antonio/Consensus Ranking_per pack/DECOR.R')
+Co=DECOR(EMD[,1:15],EMD[,16])
+Co
+bests
+cij
+NJ
+=nrow(cij)        # number of objects
+costs       = matrix(0,1,NP)  # array of initial costs
+# initialize the population (random selection)
+population = matrix(0,(NP-1),N)
+for (k in 1:(NP-1)){ population[k,] = sample(N)}
+# insert a very good candidate
+population=rbind(population,findconsensusBB(cij))
+if (FULL==TRUE){
+population[NP,]=order(population[NP,])
+}
+# compute costs of initial population
+costs=matrix(0,NP,1)
+taos=costs
+for (i in 1:NP){
+COTA=combincost(population[i,],cij,NJ)
+costs[i]=COTA$cp
+taos[i]=COTA$tp
+}
+# store the best individual and cost of initial population
+bestc = min(costs)
+bestind = which(costs==min(costs))
+bestT = max(taos)
+besti=population[bestind,]
+# generation index
+g = 2
+# evolve for generations
+no_gain = 0
+while (no_gain < L){
+# individuals mutation
+for (i in 1:NP){
+# apply mutation
+evolution = mutaterand1(population,FF,i);
+# apply crossover
+evolution = crossover(population[i,],evolution,CR)
+# apply discretization and convert to rank
+if (FULL==TRUE){
+evolution=order(evolution)}
+else{
+evolution = childtie(evolution)
+}
+# apply selection, hold the best individual
+COTAN = combincost(evolution,cij,NJ)
+cost_new=COTAN$cp
+ta_new=COTAN$tp
+if (cost_new < costs[i]){
+population[i,] = evolution
+costs[i] = cost_new
+taos[i]=ta_new
+}
+}
+# store the best individual of current generation
+bestco = min(costs)
+bestc=rbind(bestc,bestco)
+bestind = which.min(costs)
+bestTa = max(taos)
+bestT=rbind(bestT,bestTa)
+bestin=population[bestind,]
+besti=rbind(besti,bestin)
+# check if this generation improved solutions
+if (bestc[g] == bestc[(g-1)]){
+no_gain = no_gain + 1}
+else{
+no_gain = 0
+}
+# next generation
+g = g + 1
+} #end while
+# select ALL the best solutions
+indexes = which(bestc==min(bestc))
+if (FULL==TRUE){ #if1
+if (length(indexes)==1){ #if2
+bests=childclosint(matrix(besti[indexes,],1,N))}
+else{
+bests=matrix(0,length(indexes),NP)
+for (j in 1:length(indexes)){
+bests[j,]=childclosint(besti[indexes[j],])
+} #end for
+} #end if2
+} else { #if FULL = FALSE
+if(length(indexes==1))
+{bests = reordering(matrix(besti[indexes,],1,N))}
+else
+{bests = reordering(besti[indexes,])}
+} #end if1
+bests
+indexes
+bests
+bests=matrix(0,length(indexes),NP)
+for (j in 1:length(indexes)){
+bests[j,]=childclosint(besti[indexes[j],])
+} #end for
+bests
+besti
+reordering(besti[indexes,])
+bests
+indexes = which(bestc==min(bestc))
+if (FULL==TRUE){ #if1
+if (length(indexes)==1){ #if2
+bests=childclosint(matrix(besti[indexes,],1,N))}
+else{
+bests=matrix(0,length(indexes),NP)
+for (j in 1:length(indexes)){
+bests[j,]=childclosint(besti[indexes[j],])
+} #end for
+} #end if2
+} else { #if FULL = FALSE
+if(length(indexes==1))
+{bests = reordering(matrix(besti[indexes,],1,N))}
+else
+{bests = reordering(besti[indexes,])}
+} #end if1
+bests
+indexes = which(bestc==min(bestc))
+length(indexes==1)
+if(length(indexes==1))
+{bests = reordering(matrix(besti[indexes,],1,N))}
+else
+{bests = reordering(besti[indexes,])}
+indexes = which(bestc==min(bestc))
+if (FULL==TRUE){ #if1
+if (length(indexes)==1){ #if2
+bests=childclosint(matrix(besti[indexes,],1,N))}
+else{
+bests=matrix(0,length(indexes),NP)
+for (j in 1:length(indexes)){
+bests[j,]=childclosint(besti[indexes[j],])
+} #end for
+} #end if2
+} else { #if FULL = FALSE
+if(length(indexes==1)){
+bests = reordering(matrix(besti[indexes,],1,N))
+} else {
+bests = reordering(besti[indexes,])}
+} #end if1
+bests
+indexes = which(bestc==min(bestc))
+FULL
+reordering(besti[indexes,])
+if(length(indexes==1)){
+bests = reordering(matrix(besti[indexes,],1,N))
+} else {
+bests = reordering(besti[indexes,])}
+bests
+length(indexes==1)
+if(length(indexes)==1){
+bests = reordering(matrix(besti[indexes,],1,N))
+} else {
+bests = reordering(besti[indexes,])}
+bests
+source('~/R projects Antonio/Consensus Ranking_per pack/DECOR.R')
+Co=DECOR(EMD[,1:15],EMD[,16])
+Co
+library(ConsRank)
+data("APAFULL")
+combinpmatr(APAFULL)
+QuickCons(APAFULL)
+APAFULL[1,]
+X=APAFULL
+X[is.na(X)]=0
+X[1,]
+combinpmatr(APAFULL)
+combinpmatr(X)
+QuickCons(X)
+source('~/R projects Antonio/Consensus Ranking_per pack/DECOR.R')
+Co=DECOR(APAFULL)
+Co
+QuickCons(APAFULL)
+Co=DECOR(APAFULL,FULL=TRUE)
+Co
+FULL=TRUE
+X=APAFULL
+NJ=nrow(X)
+NJ
+NP=15
+L=100
+FF=0.4
+CR=0.9
+cij=combinpmatr(X)
+N=nrow(cij)        # number of objects
+costs       = matrix(0,1,NP)  # array of initial costs
+# initialize the population (random selection)
+population = matrix(0,(NP-1),N)
+for (k in 1:(NP-1)){ population[k,] = sample(N)}
+# insert a very good candidate
+population=rbind(population,findconsensusBB(cij))
+if (FULL==TRUE){
+population[NP,]=order(population[NP,])
+}
+# compute costs of initial population
+costs=matrix(0,NP,1)
+taos=costs
+for (i in 1:NP){
+COTA=combincost(population[i,],cij,NJ)
+costs[i]=COTA$cp
+taos[i]=COTA$tp
+}
+# store the best individual and cost of initial population
+bestc = min(costs)
+bestind = which(costs==min(costs))
+bestT = max(taos)
+besti=population[bestind,]
+# generation index
+g = 2
+# evolve for generations
+no_gain = 0
+while (no_gain < L){
+# individuals mutation
+for (i in 1:NP){
+# apply mutation
+evolution = mutaterand1(population,FF,i);
+# apply crossover
+evolution = crossover(population[i,],evolution,CR)
+# apply discretization and convert to rank
+if (FULL==TRUE){
+evolution=order(evolution)}
+else{
+evolution = childtie(evolution)
+}
+# apply selection, hold the best individual
+COTAN = combincost(evolution,cij,NJ)
+cost_new=COTAN$cp
+ta_new=COTAN$tp
+if (cost_new < costs[i]){
+population[i,] = evolution
+costs[i] = cost_new
+taos[i]=ta_new
+}
+}
+# store the best individual of current generation
+bestco = min(costs)
+bestc=rbind(bestc,bestco)
+bestind = which.min(costs)
+bestTa = max(taos)
+bestT=rbind(bestT,bestTa)
+bestin=population[bestind,]
+besti=rbind(besti,bestin)
+# check if this generation improved solutions
+if (bestc[g] == bestc[(g-1)]){
+no_gain = no_gain + 1}
+else{
+no_gain = 0
+}
+# next generation
+g = g + 1
+} #end while
+indexes = which(bestc==min(bestc))
+indexes
+if (length(indexes)==1){ #if2
+bests=childclosint(matrix(besti[indexes,],1,N))}
+else{
+bests=matrix(0,length(indexes),NP)
+for (j in 1:length(indexes)){
+bests[j,]=childclosint(besti[indexes[j],])
+} #end for
+} #end if2
+if (length(indexes)==1){ #if2
+bests=childclosint(matrix(besti[indexes,],1,N))}
+length(indexes)
+bests=matrix(0,length(indexes),NP)
+for (j in 1:length(indexes)){
+bests[j,]=childclosint(besti[indexes[j],])
+} #end for
+bests
+indexes = which(bestc==min(bestc))
+besti
+childcloseint(besti[indexes[1],])
+childclosint(besti[indexes[1],])
+bests
+indexes = which(bestc==min(bestc))
+bests=matrix(0,NP,N)
+for (j in 1:length(indexes)){
+bests[j,]=childclosint(besti[indexes[j],])
+} #end for
+indexes = which(bestc==min(bestc))
+bests=matrix(0,length(indexes),N)
+for (j in 1:length(indexes)){
+bests[j,]=childclosint(besti[indexes[j],])
+} #end for
+bests
+source('~/R projects Antonio/Consensus Ranking_per pack/DECOR.R')
+Co=DECOR(APAFULL,FULL=TRUE)
+Co
+Co=DECOR(APAFULL)
+Co
+EMCons(APAFULL)

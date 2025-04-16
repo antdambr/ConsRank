@@ -1,0 +1,16 @@
+{
+    "contents" : "\\name{EMCons}\n\\alias{EMCons}\n%- Also NEED an '\\alias' for EACH other topic documented here.\n\\title{\nBranch-and-bound algorithm to find consensus (median) ranking according the Kemeny's axiomatic approach\n}\n\\description{\nBranch-and-bound algorithm to find consensus ranking as definned by Emond and Mason (2002). If the number of objects to be ranked is large (greater than 15 or 20), it can work for very long time.\n}\n\\usage{\nEMCons(X, Wk = NULL, PS = TRUE)\n}\n%- maybe also 'usage' for other objects documented here.\n\\arguments{\n  \\item{X}{\nA N by M data matrix, in which there are N judges and M objects to be judged. Each row is a ranking of the objects which are represented by the columns. \\\\\nAlternatively X can contain the rankings observed only once. In this case the argument Wk must be used\n}\n  \\item{Wk}{\nOptional: the frequency of each ranking in the data\n}\n  \\item{PS}{\nIf PS=TRUE, on the screen some information about how many branches are processed are displayed\n}\n}\n\\details{\nIf the objects to be ranked is large (>15-20), it can take long time to finde the solutions\n}\n\\value{\n%%  ~Describe the value returned\n%%  If it is a LIST, use\n\\item{Consensus }{Consensus ranking}\n\\item{Tau }{Tau extended rank correlation coefficient}\n\\item{Eltime }{Elapsed time in seconds}\n%% ...\n}\n\\references{\nEmond, E. J., & Mason, D. W. (2002). A new rank correlation coefficient with application to the consensus ranking problem. Journal of Multi-Criteria Decision Analysis, 11(1), 17-28.\n}\n\\author{\nAntonio D'Ambrosio <antdambr@unina.it> and Sonia Amodio <sonia.amodio@unina.it>\n}\n\n\n%% ~Make other sections like Warning with \\section{Warning }{....} ~\n\n\\seealso{\nFASTcons\n\nQuickCons\n}\n\\examples{\ndata(Idea)\nRevIdea=6-Idea\n# as 5 means \"most associated\", it is necessary compute the reverse ranking \n#of each rankings to have rank 1 = \"most associated\" and rank 5 = \"least associated\"\nCR=EMCons(RevIdea)\n\n}\n\\keyword{ Consensus ranking }\n\\keyword{ Median ranking }% __ONLY ONE__ keyword per line\n",
+    "created" : 1427805351870.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2618143920",
+    "id" : "3E2687E1",
+    "lastKnownWriteTime" : 1427805362,
+    "path" : "~/R projects Antonio/ConsRank/man/EMCons.Rd",
+    "project_path" : "man/EMCons.Rd",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_doc"
+}

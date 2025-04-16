@@ -1,0 +1,16 @@
+{
+    "contents" : "\\name{tabulaterows}\n\\alias{tabulaterows}\n%- Also NEED an '\\alias' for EACH other topic documented here.\n\\title{\nFrequency distribution of a sample of rankings\n}\n\\description{\nGiven a sample of preference rankings, it compute the frequency associated to each ranking\n}\n\\usage{\ntabulaterows(X, miss=FALSE)\n}\n%- maybe also 'usage' for other objects documented here.\n\\arguments{\n  \\item{X}{a N by M data matrix containing N judges judging M objects}\n\\item{miss}{TRUE if there are missing data (partial or uncomplete rankings): default: FALSE}\n}\n\n\\value{\n%%  ~Describe the value returned\n%%  If it is a LIST, use\n\\item{X }{the unique rankings }\n\\item{Wk }{the frequency associated to each ranking}\n\\item{tabfreq }{frequency table}\n%% ...\n}\n\n\\author{\nSonia Amodio <sonia.amodio@unina.it>\n}\n\n\\examples{\ndata(Idea)\nTR=tabulaterows(Idea)\nFR=TR$Wk/sum(TR$Wk)\nRF=cbind(TR$X,FR)\ncolnames(RF)=c(colnames(Idea),\"fi\")\n#compute modal ranking\nmaxfreq=which(RF[,6]==max(RF[,6]))\nlabels(RF[maxfreq,1:5],5,colnames(Idea),labs=1)\n\n\ndata(APAred)\nTR=tabulaterows(APAred)\n\ndata(APAFULL)\nTR=tabulaterows(APAFULL)\nCR1=EMCons(TR$X,TR$Wk)\nCR2=FASTcons(TR$X,TR$Wk,maxiter=15)\nCR3=QuickCons(TR$X,TR$Wk)\n\n\n}\n\\keyword{ modal ranking }\n%\\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line\n",
+    "created" : 1427805597683.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1344922155",
+    "id" : "A6E18245",
+    "lastKnownWriteTime" : 1427716865,
+    "path" : "~/R projects Antonio/ConsRank/man/tabulaterows.Rd",
+    "project_path" : "man/tabulaterows.Rd",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_doc"
+}

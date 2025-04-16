@@ -1,0 +1,16 @@
+{
+    "contents" : "\\name{EMD}\n\\alias{EMD}\n\\docType{data}\n\\title{\nEmond and Mason data\n}\n\\description{\nData simuated by Emond and Mason to check their branch-and-bound algorithm. There are 112 voters ranking 15 objects. There are 21 uncomplete rankings. Data are in form of frequency table.\n}\n\\usage{data(\"EMD\")}\n\\format{\n}\n\\details{\n%%  ~~ If necessary, more details than the __description__ above ~~\n}\n\\source{\nEmond, E. J., & Mason, D. W. (2000). A new technique for high level decision support. Department of National Defence, Operational Research Division, pag. 28.\n}\n\\references{\n%%  ~~ possibly secondary sources and usages ~~\n}\n\\examples{\n\n}\n\\keyword{datasets}\n",
+    "created" : 1427805366906.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "277573991",
+    "id" : "F652BB34",
+    "lastKnownWriteTime" : 1427448025,
+    "path" : "~/R projects Antonio/ConsRank/man/EMD.Rd",
+    "project_path" : "man/EMD.Rd",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_doc"
+}

@@ -1,0 +1,16 @@
+{
+    "contents" : "\\name{findbranches}\n\\alias{findbranches}\n%- Also NEED an '\\alias' for EACH other topic documented here.\n\\title{\nAuxiliary function\n}\n\\description{\nFind correct branches in the Branch-and-Bound algorithms\n}\n\\usage{\nfindbranches(R, ...)\n}\n%- maybe also 'usage' for other objects documented here.\n\\arguments{\n  \\item{R}{\nCandidate to be the consensus ranking\n}\n  \\item{...}{\n other input values recalled by other routines\n\n}\n}\n\\value{\nCandidate to be the consensus ranking\n%%  If it is a LIST, use\n%%  \\item{comp1 }{Description of 'comp1'}\n%%  \\item{comp2 }{Description of 'comp2'}\n%% ...\n}\n\n\\author{\nAntonio D'Ambrosio <antdambr@unina.it> and Sonia amodio sonia.amodio@unina.it>\n}\n\n\n",
+    "created" : 1427805544025.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2656202416",
+    "id" : "5E31B25B",
+    "lastKnownWriteTime" : 1427719217,
+    "path" : "~/R projects Antonio/ConsRank/man/findbranches.Rd",
+    "project_path" : "man/findbranches.Rd",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_doc"
+}

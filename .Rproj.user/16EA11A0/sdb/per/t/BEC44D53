@@ -1,0 +1,16 @@
+{
+    "contents" : "\\name{findconsensusBB}\n\\alias{findconsensusBB}\n%- Also NEED an '\\alias' for EACH other topic documented here.\n\\title{\nFind a first ranking candidate to be the cinsensus ranking\n}\n\\description{\nAuxiliary function: it finds a first ranking candidate to be the consensus ranking by observing the Combined input matrix\n}\n\\usage{\nfindconsensusBB(cij)\n}\n%- maybe also 'usage' for other objects documented here.\n\\arguments{\n  \\item{cij}{\nCombined input matrix\n}\n}\n\n\\value{\nA candidate consensus ranking\n%%  If it is a LIST, use\n%%  \\item{comp1 }{Description of 'comp1'}\n%%  \\item{comp2 }{Description of 'comp2'}\n%% ...\n}\n\\references{\n%% ~put references to the literature/web site here ~\n}\n\\author{\nAntonio D'Ambrosio <antdambr@unina.it>\n}\n",
+    "created" : 1427805548197.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4294030647",
+    "id" : "BEC44D53",
+    "lastKnownWriteTime" : 1427715545,
+    "path" : "~/R projects Antonio/ConsRank/man/findconsensusBB.Rd",
+    "project_path" : "man/findconsensusBB.Rd",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_doc"
+}

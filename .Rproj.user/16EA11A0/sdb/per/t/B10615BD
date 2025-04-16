@@ -1,0 +1,16 @@
+{
+    "contents" : "\\name{BBconsensus}\n\\alias{BBconsensus}\n%- Also NEED an '\\alias' for EACH other topic documented here.\n\\title{\nFind the first approximation to the consensus ranking. Most of the time the output\nis a solution, maybe not unique\n}\n\\description{\nFind a first approximation to the consensus ranking.\n}\n\\usage{\nBBconsensus(RR, cij)\n}\n%- maybe also 'usage' for other objects documented here.\n\\arguments{\n  \\item{RR}{\nCandidate to be the consensus ranking\n}\n  \\item{cij}{\nCombined input matrix of the data set\n}\n}\n\n\\value{\n%%  ~Describe the value returned\n%%  If it is a LIST, use\n\\item{cons }{a first approximation to be the consensus ranking}\n\\item{pen }{penalty value}\n%% ...\n}\n\\references{\nAmodio, S., D'Ambrosio, A., & Siciliano, R. (2015). A Fast accurate heuristic algorithm for the consensus ranking problem. Submitted. Technical report available as arXiv preprint arXiv:1502.06498.\n}\n\\author{\nAntonio D'Ambrosio <antdambr@unina.it>\n}\n\n\n",
+    "created" : 1427805328654.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2169344286",
+    "id" : "B10615BD",
+    "lastKnownWriteTime" : 1427714876,
+    "path" : "~/R projects Antonio/ConsRank/man/BBconsensus.Rd",
+    "project_path" : "man/BBconsensus.Rd",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_doc"
+}

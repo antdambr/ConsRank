@@ -1,0 +1,16 @@
+{
+    "contents" : "\\name{scorematrix}\n\\alias{scorematrix}\n%- Also NEED an '\\alias' for EACH other topic documented here.\n\\title{\nScore matrix according Emond and Mason (2002)\n}\n\\description{\nGiven a ranking, it computes the score matrix as defined by Emond and Mason (2002)\n}\n\\usage{\nscorematrix(X)\n}\n%- maybe also 'usage' for other objects documented here.\n\\arguments{\n  \\item{X}{\na ranking (must be a row vector or, better, a matrix with one row and M columns)\n}\n}\n\n\\value{\nthe M by M score matrix\n%%  If it is a LIST, use\n%%  \\item{comp1 }{Description of 'comp1'}\n%%  \\item{comp2 }{Description of 'comp2'}\n%% ...\n}\n\\references{\nEmond, E. J., & Mason, D. W. (2002). A new rank correlation coefficient with application to the consensus ranking problem. Journal of Multi-Criteria Decision Analysis, 11(1), 17-28.\n}\n\\author{\nAntonio D'Ambrosio <antdambr@unina.it> and Sonia Amodio <sonia.amodio@unina.it>\n}\n\n\\examples{\nY = matrix(c(1,3,5,4,2),1,5)\nSM=scorematrix(Y)\n\nZ=c(1,2,4,3)\nSM2=scorematrix(Z)\n\n}\n% Add one or more standard keywords, see file 'KEYWORDS' in the\n% R documentation directory.\n\\keyword{ Score matrix }\n\n",
+    "created" : 1427805584552.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2453420832",
+    "id" : "28B57999",
+    "lastKnownWriteTime" : 1427805592,
+    "path" : "~/R projects Antonio/ConsRank/man/scorematrix.Rd",
+    "project_path" : "man/scorematrix.Rd",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_doc"
+}

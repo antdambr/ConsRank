@@ -1,0 +1,29 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1493295944079.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "D62CEB81",
+    "lastKnownWriteTime" : 7093006990330298370,
+    "last_content_update" : 1493295944079,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cacheKey" : "ECC6E826",
+        "caption" : "GlobSPCA",
+        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=GlobSPCA&cache_key=ECC6E826",
+        "displayedObservations" : 53,
+        "environment" : "",
+        "object" : "GlobSPCA",
+        "preview" : 0,
+        "totalObservations" : 53,
+        "variables" : 1
+    },
+    "relative_order" : 26,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_dataframe"
+}

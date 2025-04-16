@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "#' Transform the vector into ranking for DECOR\n#'\n#' Closest integer approach is used: the elements of x are rounded\n#' to the closest integer. Then check if any solution exists outside \n#' of the bounds (and get it back inside the bounds randomly).\n#' Finally repair the solution if repetitions exist.\n#' \n#' @param r mutated vector\n#'\n#' @return a valid ranking\n#'\n#' @references Davendra, D., and Onwubolu, G. (2007). Enhanced differential evolution hybrid scatter search for discrete optimization. In Evolutionary Computation, 2007. CEC 2007. IEEE Congress on (pp. 1156-1162). IEEE.\n#'\n#' @author Antonio D'Ambrosio \\email{antdambr@unina.it} and Giulio Mazzeo \\email{giuliomazzeo@gmail.com}\n#' \n#' @export\n\n\nchildclosint=function(r){\n  \n  # CHILDCLOSINT Transform the vector into ranking for DECoR\n  #\n  #  Closest integer approach is used: the elements of x are rounded\n  # to the closest integer. Then check if any solution exists outside \n  # of the bounds (and get it back inside the bounds randomly).\n  # Finally repair the solution if repetitions exist.\n  #\n  # Random approach is proven to be effective in:\n  #   \"Enhanced Differential Evolution...\" by Davendra and Onwubolu\n  #\n  # $Author: Giulio Mazzeo $    $Email: giuliomazzeo@gmail.com $\n  \n  \n  D = length(r)\n  \n  # closest integer\n  x = round(r)\n  \n  # correct out of bound\n  for (i in 1:D){\n    \n    \n    if (x[i]>D | x[i]<1){\n      \n      r = sample(D)\n      \n      x[i] = r[1]\n      \n    }\n    \n    \n    # correct duplicates\n    \n    \n    \n    C = setdiff(union(x,1:D),intersect(x,1:D))\n    \n    if (length(C)==0){\n      \n      x=x\n      \n    }\n    else\n    {\n      U = unique(x)\n      id = which(!duplicated(x)) \n      ix = setdiff(union(id,1:D),intersect(id,1:D))\n      x[ix] = C[sample(length(ix))]\n      \n    } #end else\n    \n  } #end for\n  x\n} #end function\n",
+    "created" : 1491673344357.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4250335979",
+    "id" : "2C60CFEF",
+    "lastKnownWriteTime" : 1491673585,
+    "last_content_update" : 1491673585222,
+    "path" : "~/R projects Antonio/ConsRank/R/childclosint.R",
+    "project_path" : "R/childclosint.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 6,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

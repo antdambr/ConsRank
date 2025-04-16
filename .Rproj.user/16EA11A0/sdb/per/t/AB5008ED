@@ -1,0 +1,16 @@
+{
+    "contents" : "\\name{BBconsensus2}\n\\alias{BBconsensus2}\n%- Also NEED an '\\alias' for EACH other topic documented here.\n\\title{\nCore function in computing consensus ranking as defined by Emond and Mason (2002)\n}\n\\description{\nCore function in computing consensus ranking as defined by Emond and Mason (2002), recalled by EMCons function\n}\n\\usage{\nBBconsensus2(RR, cij, Po, PS = TRUE)\n}\n%- maybe also 'usage' for other objects documented here.\n\\arguments{\n  \\item{RR}{\nA ranking\n}\n  \\item{cij}{\nCombined input matrix\n}\n  \\item{Po}{\nCurrent penalty\n}\n  \\item{PS}{\nIf true, it prints the evaluating branches\n}\n}\n\n\\value{\nConsensus ranking\n%%  If it is a LIST, use\n%%  \\item{comp1 }{Description of 'comp1'}\n%%  \\item{comp2 }{Description of 'comp2'}\n%% ...\n}\n\\references{\nEmond, E. J., & Mason, D. W. (2002). A new rank correlation coefficient with application to the consensus ranking problem. Journal of Multi-Criteria Decision Analysis, 11(1), 17-28.\n}\n\\author{\nAntonio D'Ambrosio <antdambr@unina.it> and Sonia Amodio <sonia.amodio@unina.it>\n}\n\n\\seealso{\nEMCons\n}\n",
+    "created" : 1427799386939.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4195613343",
+    "id" : "AB5008ED",
+    "lastKnownWriteTime" : 1427805318,
+    "path" : "~/R projects Antonio/ConsRank/man/BBconsensus2.Rd",
+    "project_path" : "man/BBconsensus2.Rd",
+    "properties" : {
+    },
+    "source_on_save" : true,
+    "type" : "r_doc"
+}

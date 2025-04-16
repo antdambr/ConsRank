@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "#' Auxiliary function\n#'\n#' Find correct branches in the Branch-and-Bound algorithms\n#'\n#' @param R Candidate to be the consensus ranking\n#' @param ord other input values recalled by other routines\n#' @param b other input values recalled by other routines\n#' @param FULL Default FULL=FALSE. If FULL=TRUE, the searching is limited to the space of complete rankings. TRUE=TRUE if the function is called by BBFULL algorithm. \n#'\n#' @return a candidate to be the median ranking\n#'\n#' @author Antonio D'Ambrosio \\email{antdambr@unina.it} and Sonia Amodio \\email{sonia.amodio@unina.it}\n#' \n#' @export\n\n\nfindbranches = function(R,ord,b,FULL=FALSE) {\n  \n  KR=t(matrix(R[ord[b]]))\n  KR=KR[-length(KR)]\n  MO=max(KR)\n  MI=min(KR)\n  aa=1\n  KO=1\n  KR[length(KR)+1]=MO+1;\n  R[ord[b]]=KR\n  candidate=mat.or.vec(nrow(R), ncol(R))\n  \n  while (KO==1)  {\n    candidate=rbind(candidate,R)\n    \n    if (aa==1){\n      candidate=matrix(candidate[-1,],1,ncol(candidate))\n    }\n    if (FULL==FALSE){\n      R[ord[b[length(b)]]]=R[ord[b[length(b)]]]-1 }else{\n        R[ord[b[length(b)]]]=R[ord[b[length(b)]]]-2\n      }\n    \n    if (MI-R[ord[b[length(b)]]] > 1) {\n      \n      KO=0\n      \n    }\n    \n    aa=aa+1\n    \n  }\n  \n  Rt=candidate\n  \n}\n",
+    "created" : 1492613097506.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "208014880",
+    "id" : "A9C26FA7",
+    "lastKnownWriteTime" : 1491572477,
+    "last_content_update" : 1491572477,
+    "path" : "~/R projects Antonio/ConsRank/R/findbranches.R",
+    "project_path" : "R/findbranches.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 19,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

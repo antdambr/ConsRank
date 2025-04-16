@@ -1,0 +1,16 @@
+{
+    "contents" : "Package: ConsRank\nType: Package\nTitle: Compute the median (or consensus) ranking according the Kemeny's axiomatic approach\nVersion: 0.0\nDate: 2015-03-26\nAuthor: Antonio D'Ambrosio <antdambr@unina.it> and Sonia Amodio <sonia.amodio@unina.it>\nMaintainer: Antonio D'Ambrosio <antdambr@unina.it> and Sonia Amodio <sonia.amodio@unina.it>\nDepends: MASS, proxy, rgl, gdata, gmodels, gplots, gtools\nDescription: Compute the median (or consensus) ranking according the Kemeny's axiomatic approach. It contains the branch-and-bound algorithm by Emond and Mason (2002) and both the Quick and Fast algorithms by Amodio, D'Ambrosio and Siciliano (2015)\nLicense: GPL-3\n",
+    "created" : 1427806116055.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "35796689",
+    "id" : "16684CA4",
+    "lastKnownWriteTime" : 1427798193,
+    "path" : "~/R projects Antonio/ConsRank/DESCRIPTION",
+    "project_path" : "DESCRIPTION",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "dcf"
+}

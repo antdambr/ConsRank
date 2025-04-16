@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "Package: ConsRank\nType: Package\nTitle: Compute the Median Ranking(s) According to the Kemeny's Axiomatic\n    Approach\nVersion: 2.0.1\nDate: 2017-04-28\nAuthor: Antonio D'Ambrosio <antdambr@unina.it>, Sonia Amodio\n    <sonia.amodio@unina.it>, Giulio Mazzeo <giuliomazzeo@gmail.com>\nMaintainer: Antonio D'Ambrosio <antdambr@unina.it>\nDepends:\n    proxy,rgl,gtools\nDescription: Compute the median ranking according to the Kemeny's axiomatic approach. \n    Rankings can or cannot contain ties, rankings can be both complete or incomplete. \n    The package contains both branch-and-bound algorithms and heuristic solutions recently proposed.\n    The package also provide some useful utilities for deal with preference rankings.\n    Essential references:\n    Emond, E.J., and Mason, D.W. (2002) <doi:10.1002/mcda.313>; \n    D'Ambrosio, A., Amodio, S., and Iorio, C. (2015) <doi:10.1285/i20705948v8n2p198>; \n    Amodio, S., D'Ambrosio, A., and Siciliano R. (2016) <doi:10.1016/j.ejor.2015.08.048>; \n    D'Ambrosio, A., Mazzeo, G., Iorio, C., and Siciliano, R. (2017) <doi:10.1016/j.cor.2017.01.017>.\nLicense: GPL-3\nURL: https://www.r-project.org/\nRepository: CRAN\nRoxygenNote: 6.0.1\n",
+    "created" : 1491750062707.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2664013783",
+    "id" : "C6F05B67",
+    "lastKnownWriteTime" : 1493389339,
+    "last_content_update" : 1493389339385,
+    "path" : "~/R projects Antonio/ConsRank/DESCRIPTION",
+    "project_path" : "DESCRIPTION",
+    "properties" : {
+    },
+    "relative_order" : 14,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "dcf"
+}

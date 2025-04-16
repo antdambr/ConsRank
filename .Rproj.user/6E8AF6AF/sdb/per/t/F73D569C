@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "#' Score matrix according Emond and Mason (2002)\n#'\n#' Given a ranking, it computes the score matrix as defined by Emond and Mason (2002)\n#'\n#' @param X a ranking (must be a row vector or, better, a matrix with one row and M columns)\n#'\n#' @return the M by M score matrix\n#'\n#' @examples\n#' Y = matrix(c(1,3,5,4,2),1,5)\n#' SM=scorematrix(Y)\n#' #\n#' Z=c(1,2,4,3)\n#' SM2=scorematrix(Z)\n#' \n#' @author Antonio D'Ambrosio \\email{antdambr@unina.it}\n#' \n#' @references Emond, E. J., and Mason, D. W. (2002). A new rank correlation coefficient with application to the consensus ranking problem. Journal of Multi-Criteria Decision Analysis, 11(1), 17-28.\n#' \n#' @seealso \\code{\\link{combinpmatr}} The combined inut matrix\n#' \n#' @export\n\nscorematrix = function (X) {\n  \n  ### SCORE MATRIX OF RANK DATA ACCORDING EMOND AND MASON\n  \n  itemnames=names(X)\n  if (is.numeric(X) & !is.matrix(X)){\n    X=matrix(X,ncol=length(X))\n  }\n  \n  c=ncol(X)\n  \n  #X must be a row vector containing a ranking of m objects\n  sm=matrix(0,c,c)\n  colnames(sm)=itemnames\n  row.names(sm)=itemnames\n  \n  for (j in 1:c){\n    diffs=sign(X[j]-X[setdiff(1:c,j)])\n    ind=setdiff(1:c,j)\n    sm[j,ind]=diffs\n  }\n  \n  idn=is.na(sm)\n  sm=((sm<=0)*2-1)-diag(c)\n  sm[idn]=0\n  sm\n}\n\n",
+    "created" : 1492613568960.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1532753073",
+    "id" : "F73D569C",
+    "lastKnownWriteTime" : 1492788029,
+    "last_content_update" : 1492788029482,
+    "path" : "~/R projects Antonio/ConsRank/R/scorematrix.R",
+    "project_path" : "R/scorematrix.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 21,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
