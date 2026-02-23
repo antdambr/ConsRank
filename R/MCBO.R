@@ -117,130 +117,56 @@ mcbo <- function(X, nbuckets, wk = NULL, ps = TRUE,
                  use_cpp = TRUE) {
   
   # ══════════════════════════════════════════════════════════════════════════
-  # 1. INPUT VALIDATION AND STANDARDIZATION
+  # 1. INPUT VALIDATION
   # ══════════════════════════════════════════════════════════════════════════
   
-  # Convert data.frame to matrix
-  if (is(X, "data.frame")) {
-    X <- as.matrix(X)
-  }
+  if (is(X, "data.frame")) X <- as.matrix(X)
+  if (is.null(nrow(X))) X <- matrix(X, nrow = 1)
   
-  # Handle vector input (single ranking)
-  if (is(nrow(X), "NULL")) {
-    X <- matrix(X, nrow = 1)
-  }
+  M <- nrow(X)
+  N <- ncol(X)
   
-  M <- nrow(X)  # Number of judges
-  N <- ncol(X)  # Number of objects
+  # Validation checks
+  if (M < 2) stop("Data matrix must contain at least two different rankings")
+  if (nbuckets < 2) stop("nbuckets must be at least 2")
+  if (nbuckets >= N) stop(paste0("nbuckets must be less than N (", N, ")"))
   
-  # ══════════════════════════════════════════════════════════════════════════
-  # 2. VALIDATION CHECKS
-  # ══════════════════════════════════════════════════════════════════════════
-  
-  # Check: Need at least 2 rankings
-  if (M < 2) {
-    stop("Data matrix must contain at least two different rankings")
-  }
-  
-  # Check: nbuckets must be integer
-  if (!is.numeric(nbuckets) || length(nbuckets) != 1 || nbuckets != as.integer(nbuckets)) {
-    stop("nbuckets must be a single integer value")
-  }
-  nbuckets <- as.integer(nbuckets)
-  
-  # Check: nbuckets range
-  if (nbuckets < 2) {
-    stop("nbuckets must be at least 2 (for nbuckets=1, the trivial solution is all items tied)")
-  }
-  
-  if (nbuckets >= N) {
-    stop(paste0("nbuckets must be less than N (number of objects = ", N, ").\n",
-                "For nbuckets = N, use consrank() with full = TRUE"))
-  }
-  
-  # Check: algorithm validity
   valid_algorithms <- c("BB", "quick", "decor")
   if (!algorithm %in% valid_algorithms) {
     stop(paste0("algorithm must be one of: ", paste(valid_algorithms, collapse = ", ")))
   }
   
-  # Check: weights validity
-  if (!is(wk, "NULL")) {
-    if (is.numeric(wk)) {
-      wk <- matrix(wk, ncol = 1)
-    }
-    if (length(wk) != M) {
-      stop("Length of wk must equal the number of rows in X")
-    }
-    if (any(wk <= 0)) {
-      stop("All weights in wk must be positive")
-    }
-  }
-  
-  # Check: parameter ranges for DECOR
-  if (algorithm == "decor") {
-    if (ff < 0 || ff > 1) {
-      stop("ff (mutation scaling rate) must be in [0, 1]")
-    }
-    if (cr < 0 || cr > 1) {
-      stop("cr (crossover range) must be in [0, 1]")
-    }
-    if (np < 1) {
-      stop("np (population size) must be at least 1")
-    }
-    if (gl < 1) {
-      stop("gl (generations limit) must be at least 1")
-    }
+  # Handle weights
+  if (!is.null(wk)) {
+    if (is.numeric(wk)) wk <- matrix(wk, ncol = 1)
+    if (length(wk) != M) stop("Length of wk must equal number of rows in X")
+    if (any(wk <= 0)) stop("All weights must be positive")
   }
   
   # ══════════════════════════════════════════════════════════════════════════
-  # 3. COMPUTE COMBINED INPUT MATRIX
-  # ══════════════════════════════════════════════════════════════════════════
-  
-  cij <- combinpmatr(X, Wk = wk, use_cpp = use_cpp)
-  
-  # Compute number of judges (for TauX calculation)
-  nj <- if (is(wk, "NULL")) M else sum(wk)
-  
-  # ══════════════════════════════════════════════════════════════════════════
-  # 4. CHECK FOR TRIVIAL SOLUTIONS
-  # ══════════════════════════════════════════════════════════════════════════
-  
-  # Check 1: All zeros in CIJ → any ranking is optimal
-  if (sum(cij == 0) == length(cij)) {
-    message("Combined Input Matrix contains only zeros: any ranking with ", 
-            nbuckets, " buckets is a median ranking")
-    
-    # Generate a simple solution: assign items round-robin to buckets
-    cr <- matrix(rep(1:nbuckets, length.out = N), nrow = 1)
-    colnames(cr) <- colnames(X)
-    
-    return(list(Consensus = cr, Tau = 0, Eltime = 0))
-  }
-  
-  # Check 2: All positive in CIJ (for non-bucket case, would give all-tie)
-  # For bucket case, we still need to compute optimal assignment
-  # So we don't return early here
-  
-  # ══════════════════════════════════════════════════════════════════════════
-  # 5. ALGORITHM DISPATCH
+  # 2. COMPUTE COMBINED INPUT MATRIX
   # ══════════════════════════════════════════════════════════════════════════
   
   tic <- proc.time()[3]
   
+  cij <- combinpmatr(X, Wk = wk, use_cpp = use_cpp)
+  nj <- if (is.null(wk)) M else sum(wk)
+  
+  # Trivial case: all zeros
+  if (sum(cij == 0) == length(cij)) {
+    cr <- matrix(rep(1:nbuckets, length.out = N), nrow = 1)
+    colnames(cr) <- colnames(X)
+    return(list(Consensus = cr, Tau = 0, Eltime = 0))
+  }
+  
+  # ══════════════════════════════════════════════════════════════════════════
+  # 3. ALGORITHM DISPATCH
+  # ══════════════════════════════════════════════════════════════════════════
+  
   if (algorithm == "BB") {
-    
-    # Branch-and-Bound: exact solution
-    out <- BB_buckets(cij = cij, 
-                      nbuckets = nbuckets, 
-                      nj = nj, 
-                      Wk = wk, 
-                      PS = ps,
-                      use_cpp = use_cpp)
+    out <- consrankBBbuckets(cij, nbuckets, nj, wk, ps, use_cpp)
     
   } else if (algorithm == "quick") {
-    
-    # Quick algorithm: fast heuristic
     out <- Quick_buckets(cij = cij, 
                          nbuckets = nbuckets, 
                          nj = nj, 
@@ -250,500 +176,343 @@ mcbo <- function(X, nbuckets, wk = NULL, ps = TRUE,
                          use_cpp = use_cpp)
     
   } else if (algorithm == "decor") {
-    
-    # Differential Evolution: metaheuristic for large problems
-    out <- DECoR_buckets(cij = cij, 
-                         nbuckets = nbuckets, 
-                         nj = nj, 
-                         Wk = wk, 
-                         maxiter = itermax,
-                         NP = np, 
-                         L = gl, 
-                         FF = ff, 
-                         CR = cr,
-                         PS = ps,
-                         use_cpp = use_cpp)
-    
+    stop("DECoR algorithm not yet implemented in this version")
   }
   
   toc <- proc.time()[3]
-  
-  # ══════════════════════════════════════════════════════════════════════════
-  # 6. FINALIZE OUTPUT
-  # ══════════════════════════════════════════════════════════════════════════
-  
   out$Eltime <- toc - tic
-  
-  # Ensure column names are preserved
-  if (!is.null(colnames(X))) {
-    colnames(out$Consensus) <- colnames(X)
-  }
   
   return(out)
 }
 
-#-------------------------------------------
-#Branch-and-Bound algorithm for Median Constrained Bucket Order
-#
-# Exact algorithm to find the median ranking with exactly nbuckets buckets.
-# This is the core implementation for the BB algorithm in mcbo().
 
+# ══════════════════════════════════════════════════════════════════════════
+# BB ALGORITHM - ORIGINAL LOGIC
+# ══════════════════════════════════════════════════════════════════════════
 
-BB_buckets <- function(cij, nbuckets, nj, Wk = NULL, PS = TRUE, use_cpp = TRUE) {
+consrankBBbuckets <- function(cij, buckets, nj, Wk, ps, use_cpp) {
   
   N <- ncol(cij)
-  isw <- is.null(Wk)  # TRUE if no weights
   
-  tic <- proc.time()[3]
+  # Generate initial candidates
+  R_init_res <- N2R(N, buckets, cij, nj, repts = 50, use_cpp = use_cpp)
+  R_init <- matrix(R_init_res$R[1, ], nrow = 1)
   
-  # ══════════════════════════════════════════════════════════════════════════
-  # STEP 1: Generate initial candidate using quantile-based heuristic
-  # ══════════════════════════════════════════════════════════════════════════
+  # Phase 1: Find initial approximation
+  CA <- BBconsensusBuckts(R_init, cij, ps, buckets, use_cpp)
+  Po <- CA$pen
   
-  if (PS) {
-    message("Generating initial candidate...")
-  }
+  # Phase 2: Refine with full BB
+  consensus <- BBconsensus3(R_init, cij, Po, ps, buckets, use_cpp)
   
-  # Generate single deterministic initial candidate
-  R_init <- findconsensusBB_buckets(cij, nbuckets)
-  
-  Sij_init <- scorematrix(R_init, use_cpp = use_cpp)
-  Po_init <- sum(abs(cij)) - sum(cij * Sij_init)  
-  
-  if (PS) {
-    message("Initial candidate buckets: ", length(unique(R_init[1,])))
-    message("Starting Branch-and-Bound refinement...")
-  }
-  
-  # ══════════════════════════════════════════════════════════════════════════
-  # STEP 2: Refine with full Branch-and-Bound
-  # ══════════════════════════════════════════════════════════════════════════
-  
-  consensus <- BBconsensus_buckets(
-    RR = R_init, 
-    cij = cij, 
-    Po = Po_init, 
-    nbuckets = nbuckets,
-    PS = PS,
-    use_cpp = use_cpp
-  )
-  
-  # ══════════════════════════════════════════════════════════════════════════
-  # STEP 3: Compute TauX correlation coefficient
-  # ══════════════════════════════════════════════════════════════════════════
-  
-  if (nrow(consensus) == 1) {
-    
-    # Single solution
-    Sij <- scorematrix(consensus, use_cpp = use_cpp)
-    
-    if (!isw) {
-      TauX <- sum(cij * Sij) / (sum(Wk) * (N * (N - 1)))
-    } else {
-      TauX <- sum(cij * Sij) / (nj * (N * (N - 1)))
-    }
-    
-  } else {
-    
-    # Multiple solutions
+  # Calculate Tau
+  if (nrow(consensus) > 1) {
     TauX <- numeric(nrow(consensus))
-    
     for (k in 1:nrow(consensus)) {
-      Sij <- scorematrix(matrix(consensus[k, ], nrow = 1), use_cpp = use_cpp)
-      
-      if (!isw) {
-        TauX[k] <- sum(cij * Sij) / (sum(Wk) * (N * (N - 1)))
-      } else {
+      Sij <- scorematrix(matrix(consensus[k, ], 1, N), use_cpp = use_cpp)
+      if (is.null(Wk)) {
         TauX[k] <- sum(cij * Sij) / (nj * (N * (N - 1)))
+      } else {
+        TauX[k] <- sum(cij * Sij) / (sum(Wk) * (N * (N - 1)))
       }
     }
+  } else {
+    Sij <- scorematrix(consensus, use_cpp = use_cpp)
+    if (is.null(Wk)) {
+      TauX <- sum(cij * Sij) / (nj * (N * (N - 1)))
+    } else {
+      TauX <- sum(cij * Sij) / (sum(Wk) * (N * (N - 1)))
+    }
   }
   
-  toc <- proc.time()[3]
-  eltime <- toc - tic
-  
-  return(list(
-    Consensus = reordering(consensus), 
-    Tau = TauX, 
-    Eltime = eltime
-  ))
+  return(list(Consensus = reordering(consensus), Tau = TauX))
 }
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# HELPER FUNCTION: Quick initialization for BB
+# BBconsensus3 - MAIN BB LOOP (ORIGINAL LOGIC)
 # ══════════════════════════════════════════════════════════════════════════
 
-findconsensusBB_buckets <- function(cij, nbuckets) {
-  
-  N <- ncol(cij)
-  
-  # Forza di ogni item
-  strength <- colSums(cij)
-  
-  # Dividi in nbuckets usando quantili
-  breaks <- quantile(strength, probs = seq(0, 1, length.out = nbuckets + 1))
-  
-  # Assegna bucket
-  bucket <- cut(strength, breaks = breaks, labels = FALSE, 
-                include.lowest = TRUE)
-  
-  # Fix se mancano buckets
-  actual_buckets <- length(unique(bucket))
-  
-  if (actual_buckets < nbuckets) {
-    # Splitta i bucket più grandi fino ad avere nbuckets
-    while (length(unique(bucket)) < nbuckets) {
-      bucket_sizes <- table(bucket)
-      largest_bucket <- as.numeric(names(which.max(bucket_sizes)))
-      items_in_largest <- which(bucket == largest_bucket)
-      
-      # Splitta a metà
-      mid <- length(items_in_largest) %/% 2
-      new_bucket_id <- max(bucket) + 1
-      bucket[items_in_largest[(mid+1):length(items_in_largest)]] <- new_bucket_id
-    }
-  } else if (actual_buckets > nbuckets) {
-    # Merge i bucket più piccoli
-    while (length(unique(bucket)) > nbuckets) {
-      bucket_sizes <- table(bucket)
-      smallest_bucket <- as.numeric(names(which.min(bucket_sizes)))
-      items_in_smallest <- which(bucket == smallest_bucket)
-      
-      # Trova bucket adiacente per merge
-      bucket_means <- tapply(strength, bucket, mean)
-      adjacent <- which.min(abs(bucket_means - bucket_means[smallest_bucket]))
-      
-      bucket[items_in_smallest] <- adjacent
-    }
-  }
-  
-  # Riordina bucket per strength media
-  bucket_means <- tapply(strength, bucket, mean)
-  bucket_order <- rank(bucket_means)
-  
-  final_ranking <- bucket_order[bucket]
-  
-  return(matrix(final_ranking, 1, N))
-}
-
-
-# ══════════════════════════════════════════════════════════════════════════
-# BBconsensus_buckets: Find BEST solution with EXACTLY nbuckets
-# (NOT the globally optimal solution - that's what consrank() does)
-# ══════════════════════════════════════════════════════════════════════════
-
-BBconsensus_buckets <- function(RR, cij, Po, nbuckets, PS = TRUE, use_cpp = TRUE) {
+BBconsensus3 <- function(RR, cij, Po, PS, buckets, use_cpp) {
   
   CR <- RR
-  a <- t(matrix(sort(RR, decreasing = TRUE)))
-  ord <- t(matrix(order(RR, decreasing = TRUE)))
+  a <- t(matrix(sort(RR)))
+  ord <- t(matrix(order(RR)))
   r <- ReorderingBB(RR, use_cpp = use_cpp)
   
-  BR.R <- r       
-  BR.P <- 0       
-  WCi <- 1        
-  lambda <- 1     
-  nobj <- ncol(RR)
-  
-  # ═══════════════════════════════════════════════════════════════════════
-  # CONVERGENCE: Track best k-bucket solution found
-  # ═══════════════════════════════════════════════════════════════════════
-  best_kbucket_penalty <- Inf
-  best_kbucket_solution <- NULL
-  no_improvement_rounds <- 0
+  BR.R <- r
+  BR.P <- 0
+  WCi <- 1
+  lambda <- 1
+  N <- ncol(RR)
   
   while (WCi == 1) {
     
-    if (PS) {
-      message("BB Round ", lambda)
-    }
+    if (PS) message("BB Round ", lambda)
     
-    # ═══════════════════════════════════════════════════════════════════════
-    # PRIMARY LOOP: Add k-th best ranked object
-    # ═══════════════════════════════════════════════════════════════════════
-    
+    # PRIMARY LOOP: add k-th object
     for (k in 2:ncol(a)) {
       
       B <- nrow(BR.R)
       b <- 1:k
       
-      KR.R_list <- vector("list", B)
-      KR.P_list <- vector("list", B)
-      valid_count <- 0
+      # Initialize consolidation variables
+      KR.R <- NULL
+      KR.P <- NULL
       
+      # SECONDARY LOOP: check branches
       for (nb in 1:B) {
-        BR.R[nb, ] <- ReorderingBB(matrix(BR.R[nb, ], nrow = 1), use_cpp = use_cpp)
         
-        rpbr <- branches_buckets(
-          brR = matrix(BR.R[nb, ], nrow = 1),
-          cij = cij, b = b, Po = Po, ord = ord,
-          Pb = matrix(BR.P[nb]),
-          nbuckets = nbuckets, k = k, use_cpp = use_cpp
+        BR.R[nb, ] <- ReorderingBB(t(matrix(BR.R[nb, ])), use_cpp = use_cpp)
+        
+        # Generate and filter branches
+        rpbr <- branchesbuckets(
+          matrix(BR.R[nb, ], nrow = 1), cij, b, Po, ord,
+          matrix(BR.P[nb]), buckets, use_cpp
         )
         
         R <- rpbr$cR
         Pbr <- rpbr$pcR
         
-        if (is.null(R) || length(R) == 0) next
+        # ═══════════════════════════════════════════════════════════
+        # RATTAPPO LOGIC - ORIGINAL
+        # ═══════════════════════════════════════════════════════════
         
-        # Store all generated branches (filtering happens later in consolidation)
-        valid_count <- valid_count + 1
-        KR.R_list[[valid_count]] <- R
-        KR.P_list[[valid_count]] <- Pbr
-      }
-      
-      if (valid_count > 0) {
-        KR.R <- do.call(rbind, KR.R_list[1:valid_count])
-        KR.P <- do.call(rbind, KR.P_list[1:valid_count])
-        
-        # ═══════════════════════════════════════════════════════════════════
-        # CRITICAL INSIGHT: Number of buckets is MONOTONICALLY INCREASING!
-        # If a branch has > nbuckets now, it will NEVER decrease to nbuckets
-        # Therefore: ELIMINATE all branches with > nbuckets IMMEDIATELY
-        # Keep ALL branches with <= nbuckets (no limit on number)
-        # ═══════════════════════════════════════════════════════════════════
-        
-        n_buckets_per_branch <- apply(KR.R, 1, function(x) length(unique(x)))
-        valid_mask <- (n_buckets_per_branch <= nbuckets)
-        
-        if (any(valid_mask)) {
-          # Keep only branches with <= nbuckets
-          KR.R <- KR.R[valid_mask, , drop = FALSE]
-          KR.P <- KR.P[valid_mask, , drop = FALSE]
+        if (!is.null(R) && length(R) > 0) {
           
-          # Update for next iteration
-          BR.R <- KR.R
-          BR.P <- matrix(KR.P, ncol = 1)
-        } else {
-          # All branches have > nbuckets
-          # Keep BR.R unchanged (don't update with invalid branches)
-          if (PS) {
-            message("    All ", sum(!valid_mask), " branches have > ", nbuckets, " buckets - keeping previous")
+          rattappo <- matrix(0, nrow(R), 1)
+          
+          if (k <= buckets) {
+            # Early phase: remove if > buckets
+            for (L in 1:nrow(R)) {
+              rattappo[L, 1] <- ifelse(length(table(R[L, ord[b]])) > buckets, 1, 0)
+            }
+            
+          } else {
+            # Late phase: remove if > buckets OR < (buckets-2)
+            for (L in 1:nrow(R)) {
+              rattappo[L, 1] <- ifelse(
+                length(table(R[L, ord[b]])) > buckets | 
+                  length(table(R[L, ord[b]])) < (buckets - 2),
+                1, 0
+              )
+            }
           }
-          # BR.R stays as is - continue with previous valid branches
-        }
-      }
-      
-      if (PS) {
-        message("  k=", k, ": ", B, " branches, ", valid_count, " valid")
-      }
-    }
-    
-    # ═══════════════════════════════════════════════════════════════════════
-    # CHECK: Best k-bucket solution in this round
-    # ═══════════════════════════════════════════════════════════════════════
-    
-    SSP <- which(BR.P == min(BR.P))
-    MinP <- min(BR.P)
-    
-    CR_candidate <- matrix(BR.R[SSP, ], length(SSP), nobj)
-    n_buckets <- apply(CR_candidate, 1, function(x) length(unique(x)))
-    
-    # Filter ONLY k-bucket solutions
-    k_bucket_mask <- (n_buckets == nbuckets)
-    
-    if (PS) {
-      message("  Global MinPenalty: ", round(MinP, 2), 
-              " (buckets: ", paste(unique(n_buckets), collapse = ", "), ")")
-    }
-    
-    if (any(k_bucket_mask)) {
-      # Found k-bucket solutions this round
-      CR_kbucket <- CR_candidate[k_bucket_mask, , drop = FALSE]
-      
-      # Get penalties for k-bucket solutions
-      P_kbucket <- BR.P[SSP[k_bucket_mask]]
-      min_kbucket_penalty <- min(P_kbucket)
-      
-      if (PS) {
-        message("  → ", nbuckets, "-bucket penalty: ", round(min_kbucket_penalty, 2))
-      }
-      
-      # Check if improved
-      if (min_kbucket_penalty < best_kbucket_penalty) {
-        # IMPROVEMENT!
-        best_kbucket_penalty <- min_kbucket_penalty
-        best_idx <- which(P_kbucket == min_kbucket_penalty)
-        best_kbucket_solution <- CR_kbucket[best_idx, , drop = FALSE]
-        no_improvement_rounds <- 0
-        
-        if (PS) {
-          message("  ✓ IMPROVED k-bucket solution (penalty: ", 
-                  round(best_kbucket_penalty, 2), ")")
-        }
-        
-      } else {
-        # No improvement
-        no_improvement_rounds <- no_improvement_rounds + 1
-        
-        if (PS) {
-          message("  No improvement (", no_improvement_rounds, " rounds)")
-        }
-        
-        # CONVERGE if no improvement for 3 consecutive rounds
-        if (no_improvement_rounds >= 3) {
-          CR <- best_kbucket_solution
-          if (PS) {
-            message("  ✓ CONVERGED: Best ", nbuckets, "-bucket solution ",
-                    "(penalty: ", round(best_kbucket_penalty, 2), ")")
+          
+          # Apply filter
+          if (sum(rattappo > 0)) {
+            valid_idx <- which(rattappo == 0)
+            if (length(valid_idx) > 0) {
+              R <- R[valid_idx, , drop = FALSE]
+              Pbr <- matrix(Pbr[valid_idx], ncol = 1)
+            } else {
+              R <- NULL
+              Pbr <- NULL
+            }
           }
-          WCi <- 0
-          break
+          
+          if (!is.null(R) && is.null(nrow(R))) {
+            R <- matrix(R, nrow = 1)
+          }
         }
-      }
-    } else {
-      # No k-bucket solutions this round
-      if (PS) {
-        message("  → No ", nbuckets, "-bucket solutions this round ",
-                "(found: ", paste(unique(n_buckets), collapse = ", "), " buckets)")
-      }
-      no_improvement_rounds <- no_improvement_rounds + 1
+        
+        # ═══════════════════════════════════════════════════════════
+        # Consolidate branches
+        # ═══════════════════════════════════════════════════════════
+        
+        if (!is.null(R) && length(R) > 0) {
+          if (is.null(KR.R)) {
+            KR.R <- R
+            KR.P <- Pbr
+          } else {
+            KR.R <- rbind(KR.R, R)
+            KR.P <- rbind(KR.P, Pbr)
+          }
+        }
+        
+      }  # end secondary loop
       
-      # If we already have a best solution and no improvement for 5 rounds, stop
-      if (!is.null(best_kbucket_solution) && no_improvement_rounds >= 5) {
-        CR <- best_kbucket_solution
-        if (PS) {
-          message("  ✓ CONVERGED: Returning best ", nbuckets, 
-                  "-bucket solution found (penalty: ", 
-                  round(best_kbucket_penalty, 2), ")")
-        }
+      # Update branches for next k
+      if (!is.null(KR.R) && length(KR.R) > 0) {
+        BR.R <- KR.R
+        BR.P <- matrix(KR.P, ncol = 1)
+      }
+      
+      if (PS && !is.null(BR.R)) {
+        message("  k=", k, ": ", nrow(BR.R), " branches")
+      }
+      
+    }  # end primary loop
+    
+    # ═══════════════════════════════════════════════════════════════
+    # CHECK AND CONVERGENCE
+    # ═══════════════════════════════════════════════════════════════
+    
+    # Remove solutions with wrong number of buckets
+    if (!is.null(BR.R) && nrow(BR.R) > 0) {
+      checklength <- which(apply(BR.R, 1, function(x) length(table(x))) != buckets)
+      
+      if (length(checklength) > 0 && length(checklength) < nrow(BR.R)) {
+        BR.R <- matrix(BR.R[-checklength, ], ncol = N)
+        BR.P <- matrix(BR.P[-checklength], ncol = 1)
+      } else if (length(checklength) == nrow(BR.R)) {
+        # All solutions have wrong bucket count - this shouldn't happen
+        warning("No valid solutions found with exactly ", buckets, " buckets")
         WCi <- 0
-        break
+        next
       }
     }
     
-    # Continue to next round
-    if (WCi == 1) {
+    SSP <- matrix(which(BR.P == min(BR.P)))
+    MinP <- min(BR.P)
+    PenMin <- Po - MinP
+    
+    # Check convergence
+    if (PenMin == 0) {
+      # Found optimal solution
+      CR <- matrix(BR.R[SSP, ], length(SSP), N)
+      WCi <- 0
+      
+    } else {
+      # Continue to next round
       Po <- MinP
+      WCi <- 1
       lambda <- lambda + 1
-      nRR <- matrix(BR.R[SSP[1], ], 1, nobj)
+      nRR <- matrix(BR.R[SSP[1], ], 1, N)
       BR.R <- nRR
       BR.P <- 0
       a <- t(matrix(sort(BR.R)))
       ord <- t(matrix(order(BR.R)))
     }
-  }
-  
-  # ═══════════════════════════════════════════════════════════════════════
-  # FINAL CHECKS
-  # ═══════════════════════════════════════════════════════════════════════
-  
-  if (is.null(best_kbucket_solution)) {
-    # No k-bucket solution found - fallback
-    warning("No ", nbuckets, "-bucket solution found during search. ",
-            "Returning best approximation.")
     
-    SSP <- which(BR.P == min(BR.P))
-    CR <- matrix(BR.R[SSP, ], length(SSP), nobj)
-    n_buckets <- apply(CR, 1, function(x) length(unique(x)))
-    
-    # Try to find closest to k
-    closest_idx <- which.min(abs(n_buckets - nbuckets))
-    CR <- matrix(CR[closest_idx, ], 1, nobj)
-  } else {
-    CR <- best_kbucket_solution
-  }
-  
-  # Remove duplicates
-  CR <- unique(CR)
-  if (!is.matrix(CR)) CR <- matrix(CR, nrow = 1)
+  }  # end while
   
   return(CR)
 }
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# IMPROVED: Filter rankings by bucket constraint (VECTORIZED)
+# branchesbuckets - Generate and filter branches
 # ══════════════════════════════════════════════════════════════════════════
 
-filter_by_bucket_constraint <- function(R, ord, b, nbuckets, k) {
-  #' @description
-  #' Improved bucket constraint check with clear logic:
-  #' 
-  #' ADAPTIVE CONSTRAINT STRATEGY:
-  #' - Early iterations (k <= nbuckets): Allow at most nbuckets
-  #' - Later iterations (k > nbuckets): Require between (nbuckets-1) and nbuckets
-  #' 
-  #' RATIONALE:
-  #' - Early: Be permissive to explore search space
-  #' - Late: Be strict to ensure final solution has exactly nbuckets
-  #' 
-  #' The (nbuckets-1) lower bound in late iterations allows temporary
-  #' solutions that are "almost there" and will reach nbuckets when
-  #' all items are assigned.
+branchesbuckets <- function(brR, cij, b, Po, ord, Pb, buckets, use_cpp) {
   
-  if (!is.matrix(R)) {
+  # Generate candidate branches
+  candidate <- findbranchesbuckets(brR, ord, b, buckets)
+  
+  if (is.null(candidate) || nrow(candidate) == 0) {
+    return(list(cR = NULL, pcR = NULL))
+  }
+  
+  Pb <- matrix(rep(Pb, nrow(candidate)))
+  
+  # ══════════════════════════════════════════════════════════════════════════
+  # OTTIMIZZAZIONE C++: Calcolo batch delle penalità
+  # ══════════════════════════════════════════════════════════════════════════
+  
+  if (use_cpp) {
+    # Use C++ batch penalty calculation
+    addpenalty <- PenaltyBB2_batch_impl(cij, candidate, as.integer(ord[b]))
+  } else {
+    # R fallback
+    addpenalty <- matrix(0, nrow(candidate), 1)
+    for (gm in 1:nrow(candidate)) {
+      addpenalty[gm, ] <- PenaltyBB2(cij, candidate[gm, ], ord[b], use_cpp = FALSE)
+    }
+  }
+  
+  # Filter by penalty
+  Pbr <- addpenalty + Pb
+  idp <- which(Pbr <= Po)
+  
+  if (length(idp) == 0) {
+    return(list(cR = NULL, pcR = NULL))
+  }
+  
+  R <- candidate[idp, , drop = FALSE]
+  Pbr <- matrix(Pbr[idp], ncol = 1)
+  
+  if (is.null(nrow(R))) {
     R <- matrix(R, nrow = 1)
   }
   
-  n_candidates <- nrow(R)
-  
-  # Extract relevant portion of ranking (only items processed so far)
-  R_subset <- R[, ord[b], drop = FALSE]
-  
-  # Count unique buckets for each candidate (VECTORIZED)
-  n_unique_buckets <- apply(R_subset, 1, function(x) length(unique(x)))
-  
-  # Define valid range based on iteration
-  if (k <= nbuckets) {
-    # EARLY PHASE: Allow partial solutions with at most nbuckets
-    valid <- (n_unique_buckets <= nbuckets)
-  } else {
-    # LATE PHASE: Require close to target
-    # Allow (nbuckets-1) because final items may create the last bucket
-    valid <- (n_unique_buckets >= (nbuckets - 1)) & (n_unique_buckets <= nbuckets)
-  }
-  
-  if (!any(valid)) {
-    return(NULL)
-  }
-  
-  valid_idx <- which(valid)
-  R_filtered <- R[valid_idx, , drop = FALSE]
-  
-  # Attach indices for penalty filtering
-  attr(R_filtered, "valid_idx") <- valid_idx
-  
-  return(R_filtered)
+  return(list(cR = R, pcR = Pbr))
 }
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# Phase 1 of BBconsensus (simplified for initialization)
+# findbranchesbuckets - Generate branches (ORIGINAL LOGIC)
 # ══════════════════════════════════════════════════════════════════════════
 
-BBconsensus_buckets_phase1 <- function(RR, cij, nbuckets, PS = FALSE, use_cpp = TRUE) {
+findbranchesbuckets <- function(R, ord, b, buckets) {
+  
+  KR <- R[ord[b]]
+  KR <- KR[-length(KR)]
+  mo <- max(KR)
+  mi <- min(KR)
+  KR[length(KR) + 1] <- mo + 1
+  R[ord[b]] <- KR
+  candidate <- matrix(R, nrow = 1)
+  KO <- 1
+  
+  while (KO == 1) {
+    
+    R[ord[b[length(b)]]] <- R[ord[b[length(b)]]] - 1
+    
+    if (length(table(R[ord[b]])) <= (buckets + 1)) {
+      candidate <- rbind(candidate, R)
+    }
+    
+    if (mi - R[ord[b[length(b)]]] > 1) {
+      KO <- 0
+    }
+  }
+  
+  # Remove duplicates (original logic)
+  Rt <- candidate[!duplicated(reordering(candidate[, ord[b], drop = FALSE])), , drop = FALSE]
+  
+  return(Rt)
+}
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# BBconsensusBuckts - Phase 1 initialization (OPTIMIZED)
+# ══════════════════════════════════════════════════════════════════════════
+
+BBconsensusBuckts <- function(RR, cij, PS, buckets, use_cpp) {
   
   if (is.null(ncol(RR))) {
     RR <- matrix(RR, nrow = 1)
   }
   
   CR <- RR
+  N <- ncol(RR)
   sij <- scorematrix(RR, use_cpp = use_cpp)
   Po <- sum(abs(cij)) - sum(cij * sij)
-  
   a <- t(matrix(sort(RR, decreasing = TRUE)))
   ord <- t(matrix(order(RR, decreasing = TRUE)))
   R <- RR
   addpenalty <- matrix(0, length(a), 1)
   
-  # Exploration of initial solution
+  # Explore initial solution
   for (k in 2:length(a)) {
     
     b <- 1:k
     R <- ReorderingBB(R, use_cpp = use_cpp)
-    KR <- t(matrix(R[ord[b]]))
+    
+    # OPTIMIZED: Direct assignment instead of t(matrix(...))
+    KR <- R[ord[b]]
     KR <- KR[-length(KR)]
-    MO <- max(KR)
-    MI <- min(KR)
+    mo <- max(KR)
+    mi <- min(KR)
     aa <- 1
     KO <- 1
-    KR[length(KR) + 1] <- MO + 1
+    KR[length(KR) + 1] <- mo + 1
     R[ord[b]] <- KR
     
     candidate <- matrix(0, nrow(RR), ncol(RR))
     Pb <- matrix(0, 1, 1)
+    Pc <- 1
     
     while (KO == 1) {
       
@@ -753,16 +522,16 @@ BBconsensus_buckets_phase1 <- function(RR, cij, nbuckets, PS = FALSE, use_cpp = 
         candidate <- matrix(candidate[-1, ], 1, ncol(candidate))
       }
       
-      Sij <- scorematrix(matrix(candidate[aa, ], 1, ncol(R)), use_cpp = use_cpp)
+      Sij <- scorematrix(matrix(candidate[aa, ], 1, N), use_cpp = use_cpp)
       Pb <- rbind(Pb, sum(abs(cij)) - sum(cij * Sij))
       
       if (aa == 1) {
         Pb <- matrix(Pb[-1, ], 1, 1)
       }
       
-      # IMPROVED: Use .Machine$double.xmax instead of magic number
-      if (length(unique(candidate[aa, ])) != nbuckets) {
-        Pb[aa] <- .Machine$double.xmax / 2  # Half of max to avoid overflow
+      # Penalize wrong bucket count
+      if (length(table(candidate[aa, ])) != buckets) {
+        Pb[aa] <- 1e10
       }
       
       if (Pb[aa] == 0) {
@@ -775,16 +544,14 @@ BBconsensus_buckets_phase1 <- function(RR, cij, nbuckets, PS = FALSE, use_cpp = 
       Pc <- 1
       R[ord[b[length(b)]]] <- R[ord[b[length(b)]]] - 1
       
-      if (MI - R[ord[b[length(b)]]] > 1) {
+      if (mi - R[ord[b[length(b)]]] > 1) {
         KO <- 0
       }
       
       aa <- aa + 1
     }
     
-    if (Pc == 0) {
-      break
-    }
+    if (Pc == 0) break
     
     minp <- min(Pb)
     posp <- which(Pb == min(Pb))
@@ -799,18 +566,15 @@ BBconsensus_buckets_phase1 <- function(RR, cij, nbuckets, PS = FALSE, use_cpp = 
       addpenalty[k, 1] <- PenaltyBB2(cij, R, ord[b], use_cpp = use_cpp)
     }
     
-    candidate <- mat.or.vec(nrow(R), ncol(R))
-    Pb <- mat.or.vec(1, 1)
+    candidate <- matrix(0, nrow(R), N)
+    Pb <- matrix(0, 1, 1)
   }
   
   if (Pc == 0) {
     Po <- 0
     addpenalty <- 0
-  } else {
-    Poo <- sum(addpenalty)
   }
   
-  SIJ <- scorematrix(CR, use_cpp = use_cpp)
   Po <- sum(addpenalty)
   
   return(list(cons = CR, pen = Po))
@@ -818,143 +582,350 @@ BBconsensus_buckets_phase1 <- function(RR, cij, nbuckets, PS = FALSE, use_cpp = 
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# branches_buckets: Generate branches with bucket-aware penalty filtering
+# N2R - Generate random initial candidates
 # ══════════════════════════════════════════════════════════════════════════
 
-branches_buckets <- function(brR, cij, b, Po, ord, Pb, nbuckets, k, use_cpp = TRUE) {
+N2R <- function(N, buckets, cij, M, repts, use_cpp = TRUE) {
   
-  # Generate candidate branches
-  candidate <- findbranches_buckets(brR, ord, b, nbuckets, use_cpp = use_cpp)
+  R <- matrix(0, repts, N)
+  ta <- numeric(length = repts)
   
-  if (is.null(candidate) || nrow(candidate) == 0) {
-    return(list(cR = NULL, pcR = NULL))
-  }
-  
-  n_cand <- nrow(candidate)
-  
-  # Compute penalties using C++ batch if available
-  if (use_cpp) {
-    ord_subset <- ord[b]
-    addpenalty <- PenaltyBB2_batch_impl(cij, candidate, ord_subset)
-  } else {
-    # R fallback
-    addpenalty <- numeric(n_cand)
-    for (gm in 1:n_cand) {
-      addpenalty[gm] <- PenaltyBB2(cij, candidate[gm, ], ord[b], use_cpp = FALSE)
+  for (j in 1:repts) {
+    
+    repeat {
+      r <- round(runif(N, 1, buckets))
+      lt <- length(table(r))
+      
+      if (lt == buckets) {
+        t <- sum(scorematrix(r, use_cpp = use_cpp) * cij / (M * N * (N - 1)))
+        if (t > 0) break
+      }
     }
+    
+    R[j, ] <- r
+    ta[j] <- t
   }
   
-  # Compute total penalties
-  Pbr <- addpenalty + as.numeric(Pb)
-  
-  # Filter candidates by penalty threshold
-  valid_mask <- (Pbr <= Po)
-  
-  if (!any(valid_mask)) {
-    return(list(cR = NULL, pcR = NULL))
+  # Remove duplicates
+  if (sum(duplicated(R)) != 0) {
+    idr <- which(duplicated(R))
+    R <- R[-idr, , drop = FALSE]
+    ta <- ta[-idr]
   }
   
-  # Extract valid candidates
-  R <- candidate[valid_mask, , drop = FALSE]
-  Pbr_valid <- Pbr[valid_mask]
+  # Sort by tau (descending)
+  id <- order(ta, decreasing = TRUE)
+  R <- R[id, , drop = FALSE]
+  ta <- ta[id]
   
-  # Ensure matrix format
-  if (nrow(R) == 1) {
-    R <- matrix(R, 1, ncol(candidate))
-  }
-  
-  return(list(cR = R, pcR = matrix(Pbr_valid, ncol = 1)))
+  return(list(R = R, ta = ta))
 }
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# findbranches_buckets: Generate branches with native bucket constraint
+# Quick algorithm for Median Constrained Bucket Order
 # ══════════════════════════════════════════════════════════════════════════
 
-findbranches_buckets <- function(R, ord, b, nbuckets, use_cpp = TRUE) {
+Quick_buckets <- function(cij, nbuckets, nj, Wk = NULL, maxiter = 10, PS = TRUE, use_cpp = TRUE) {
   
-  N <- ncol(R)
-  k <- length(b)
+  N <- ncol(cij)
+  isw <- is.null(Wk)
   
-  # ═══════════════════════════════════════════════════════════════
-  # STEP 1: Analizza situazione corrente
-  # ═══════════════════════════════════════════════════════════════
-  
-  R_partial <- R[ord[b]]  # Ranking parziale
-  current_buckets <- length(unique(R_partial[-length(R_partial)]))  # Escludi ultimo
-  remaining_items <- N - k
-  
-  # ═══════════════════════════════════════════════════════════════
-  # STEP 2: Calcola quanti buckets DEVI ancora creare
-  # ═══════════════════════════════════════════════════════════════
-  
-  buckets_needed <- nbuckets - current_buckets
-  
-  # ═══════════════════════════════════════════════════════════════
-  # STEP 3: Verifica fattibilità
-  # ═══════════════════════════════════════════════════════════════
-  
-  if (buckets_needed > remaining_items) {
-    # Impossibile: troppi buckets da creare con pochi items
-    return(NULL)
+  if (PS) {
+    message("Quick algorithm: generating ", maxiter, " candidate solutions...")
   }
   
-  if (buckets_needed < 0) {
-    # Impossibile: già troppi buckets
-    return(NULL)
-  }
+  # ══════════════════════════════════════════════════════════════════════════
+  # STEP 1: Generate multiple random starting points
+  # ══════════════════════════════════════════════════════════════════════════
   
-  # ═══════════════════════════════════════════════════════════════
-  # STEP 4: Genera candidati VALIDI (FIXED seq() logic)
-  # ═══════════════════════════════════════════════════════════════
+  all_solutions <- vector("list", maxiter)
+  all_taus <- numeric(maxiter)
   
-  last_rank <- R_partial[length(R_partial)]
-  min_rank <- min(R_partial[-length(R_partial)])
-  
-  if (buckets_needed == 0) {
-    # SOLO tie con bucket esistenti
-    valid_ranks <- unique(R_partial[-length(R_partial)])
+  for (iter in 1:maxiter) {
     
-  } else if (buckets_needed == remaining_items) {
-    # DEVI creare un nuovo bucket per OGNI remaining item
-    start_val <- last_rank - 1
-    end_val <- min_rank - 1
-    
-    # FIX: Gestisci caso start < end
-    if (start_val >= end_val) {
-      valid_ranks <- seq(start_val, end_val, by = -1)
-    } else {
-      valid_ranks <- start_val  # Almeno un nuovo bucket
+    if (PS) {
+      message("  Iteration ", iter, "/", maxiter)
     }
     
-  } else {
-    # Flessibilità: tie O nuovo bucket
-    start_val <- last_rank - 1
-    end_val <- min_rank - 1
+    # Generate random initial candidate with nbuckets
+    R_init <- findconsensusBB_buckets(cij, nbuckets)
     
-    # FIX: Gestisci caso start < end
-    if (start_val >= end_val) {
-      new_buckets <- seq(start_val, end_val, by = -1)
-    } else {
-      new_buckets <- start_val  # Almeno un nuovo bucket
+    # Optionally perturb the initial solution for diversity
+    if (iter > 1) {
+      # Add small random perturbation
+      perm_idx <- sample(N, size = min(3, N))
+      for (idx in perm_idx) {
+        # Random bucket assignment (within 1:nbuckets)
+        R_init[1, idx] <- sample(1:nbuckets, 1)
+      }
     }
     
-    valid_ranks <- c(last_rank, new_buckets)
+    # Calculate initial penalty
+    Sij_init <- scorematrix(R_init, use_cpp = use_cpp)
+    Po_init <- sum(abs(cij)) - sum(cij * Sij_init)
+    
+    # Refine with lightweight BB (1 pass only)
+    bb_result <- BBconsensusBuckts_phase1(
+      RR = R_init,
+      cij = cij,
+      nbuckets = nbuckets,
+      PS = FALSE,
+      use_cpp = use_cpp
+    )
+    
+    consensus <- bb_result$cons
+    
+    # Ensure it's a matrix
+    if (!is.matrix(consensus)) {
+      consensus <- matrix(consensus, 1, N)
+    }
+    
+    # Calculate TauX for this solution
+    Sij <- scorematrix(consensus, use_cpp = use_cpp)
+    
+    if (!isw) {
+      tau <- sum(cij * Sij) / (sum(Wk) * (N * (N - 1)))
+    } else {
+      tau <- sum(cij * Sij) / (nj * (N * (N - 1)))
+    }
+    
+    all_solutions[[iter]] <- consensus
+    all_taus[iter] <- tau
+    
+    if (PS) {
+      message("    Tau: ", round(all_taus[iter], 4))
+    }
   }
   
-  # ═══════════════════════════════════════════════════════════════
-  # STEP 5: Genera matrice candidati
-  # ═══════════════════════════════════════════════════════════════
+  # ══════════════════════════════════════════════════════════════════════════
+  # STEP 2: Combine and select best unique solutions
+  # ══════════════════════════════════════════════════════════════════════════
   
-  n_candidates <- length(valid_ranks)
-  candidates <- matrix(0, n_candidates, N)
+  # Combine all solutions
+  all_consensus <- do.call(rbind, all_solutions)
   
-  for (i in 1:n_candidates) {
-    candidates[i, ] <- R
-    candidates[i, ord[k]] <- valid_ranks[i]
+  # Remove duplicates
+  unique_idx <- !duplicated(all_consensus)
+  unique_consensus <- all_consensus[unique_idx, , drop = FALSE]
+  unique_taus <- all_taus[unique_idx]
+  
+  # Keep only the best solutions
+  best_tau <- max(unique_taus)
+  best_idx <- which(unique_taus == best_tau)
+  
+  final_consensus <- unique_consensus[best_idx, , drop = FALSE]
+  final_tau <- unique_taus[best_idx]
+  
+  if (PS) {
+    message("Quick completed: ", length(best_idx), " solution(s) with Tau = ", 
+            round(best_tau, 4))
   }
   
-  return(candidates)
+  # Apply reordering before returning
+  final_consensus <- reordering(final_consensus)
+  
+  return(list(Consensus = final_consensus, Tau = final_tau))
 }
 
-#-------------------------------------
+
+# ══════════════════════════════════════════════════════════════════════════
+# HELPER FUNCTION: Quick initialization for BB
+# ══════════════════════════════════════════════════════════════════════════
+
+findconsensusBB_buckets <- function(cij, nbuckets) {
+  
+  N <- ncol(cij)
+  
+  # Edge case: nbuckets = N-1 (almost full ranking)
+  # Just assign each item its own bucket except tie the two weakest
+  if (nbuckets >= N - 1) {
+    strength <- colSums(cij)
+    ranking <- rank(-strength, ties.method = "first")
+    
+    # Find two items with closest strength to tie together
+    strength_sorted <- sort(strength)
+    min_diff_idx <- which.min(diff(strength_sorted))
+    tie_value <- strength_sorted[min_diff_idx]
+    
+    # Assign buckets: most items get unique bucket, two weakest share one
+    bucket <- ranking
+    tie_items <- which(strength <= strength_sorted[min_diff_idx + 1])
+    if (length(tie_items) >= 2) {
+      bucket[tie_items[1:2]] <- max(bucket)
+    }
+    
+    # Renumber to 1:nbuckets
+    bucket_map <- rank(unique(sort(bucket)))
+    final_ranking <- bucket_map[match(bucket, unique(sort(bucket)))]
+    
+    return(matrix(final_ranking, 1, N))
+  }
+  
+  # Normal case: nbuckets << N
+  strength <- colSums(cij)
+  
+  # Use more robust method: assign items to buckets by strength percentiles
+  # This avoids issues with identical quantile values
+  strength_ranks <- rank(strength, ties.method = "first")
+  
+  # Assign to buckets based on rank
+  items_per_bucket <- N / nbuckets
+  bucket <- ceiling(strength_ranks / items_per_bucket)
+  
+  # Ensure exactly nbuckets
+  bucket <- pmin(bucket, nbuckets)
+  
+  # Fix if we have too few buckets (due to ties)
+  actual_buckets <- length(unique(bucket))
+  
+  if (actual_buckets < nbuckets) {
+    # Split largest buckets
+    while (length(unique(bucket)) < nbuckets) {
+      bucket_sizes <- table(bucket)
+      largest_bucket <- as.numeric(names(which.max(bucket_sizes)))
+      items_in_largest <- which(bucket == largest_bucket)
+      
+      if (length(items_in_largest) < 2) break  # Can't split further
+      
+      # Split in half
+      mid <- length(items_in_largest) %/% 2
+      new_bucket_id <- max(bucket) + 1
+      bucket[items_in_largest[(mid+1):length(items_in_largest)]] <- new_bucket_id
+    }
+  } else if (actual_buckets > nbuckets) {
+    # Merge smallest buckets
+    while (length(unique(bucket)) > nbuckets) {
+      bucket_sizes <- table(bucket)
+      smallest_bucket <- as.numeric(names(which.min(bucket_sizes)))
+      
+      # Merge with adjacent bucket (by strength)
+      bucket_means <- tapply(strength, bucket, mean)
+      other_buckets <- setdiff(unique(bucket), smallest_bucket)
+      
+      if (length(other_buckets) == 0) break
+      
+      distances <- abs(bucket_means[as.character(other_buckets)] - 
+                         bucket_means[as.character(smallest_bucket)])
+      adjacent <- other_buckets[which.min(distances)]
+      
+      bucket[bucket == smallest_bucket] <- adjacent
+    }
+  }
+  
+  # Renumber buckets 1:nbuckets by mean strength
+  bucket_means <- tapply(strength, bucket, mean)
+  bucket_order <- rank(bucket_means)
+  
+  final_ranking <- bucket_order[bucket]
+  
+  return(matrix(final_ranking, 1, N))
+}
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# BBconsensusBuckts_phase1: Lightweight BB for Quick (1 pass only)
+# ══════════════════════════════════════════════════════════════════════════
+
+BBconsensusBuckts_phase1 <- function(RR, cij, nbuckets, PS = FALSE, use_cpp = TRUE) {
+  
+  if (is.null(ncol(RR))) {
+    RR <- matrix(RR, nrow = 1)
+  }
+  
+  CR <- RR
+  N <- ncol(RR)
+  sij <- scorematrix(RR, use_cpp = use_cpp)
+  Po <- sum(abs(cij)) - sum(cij * sij)
+  a <- t(matrix(sort(RR, decreasing = TRUE)))
+  ord <- t(matrix(order(RR, decreasing = TRUE)))
+  R <- RR
+  addpenalty <- matrix(0, length(a), 1)
+  
+  # Single pass exploration
+  for (k in 2:length(a)) {
+    
+    b <- 1:k
+    R <- ReorderingBB(R, use_cpp = use_cpp)
+    
+    # OPTIMIZED: Direct assignment
+    KR <- R[ord[b]]
+    KR <- KR[-length(KR)]
+    mo <- max(KR)
+    mi <- min(KR)
+    aa <- 1
+    KO <- 1
+    KR[length(KR) + 1] <- mo + 1
+    R[ord[b]] <- KR
+    
+    candidate <- matrix(0, nrow(RR), ncol(RR))
+    Pb <- matrix(0, 1, 1)
+    Pc <- 1
+    
+    while (KO == 1) {
+      
+      candidate <- rbind(candidate, R)
+      
+      if (aa == 1) {
+        candidate <- matrix(candidate[-1, ], 1, ncol(candidate))
+      }
+      
+      Sij <- scorematrix(matrix(candidate[aa, ], 1, N), use_cpp = use_cpp)
+      Pb <- rbind(Pb, sum(abs(cij)) - sum(cij * Sij))
+      
+      if (aa == 1) {
+        Pb <- matrix(Pb[-1, ], 1, 1)
+      }
+      
+      # Penalize wrong bucket count
+      if (length(table(candidate[aa, ])) != nbuckets) {
+        Pb[aa] <- 1e10
+      }
+      
+      # Check if optimal found
+      if (Pb[aa] == 0) {
+        CR <- R
+        Po <- 0
+        Pc <- 0
+        break
+      }
+      
+      R[ord[b[length(b)]]] <- R[ord[b[length(b)]]] - 1
+      
+      if (mi - R[ord[b[length(b)]]] > 1) {
+        KO <- 0
+      }
+      
+      aa <- aa + 1
+    }
+    
+    if (Pc == 0) {
+      break
+    }
+    
+    # Update with best found
+    minp <- min(Pb)
+    posp <- which(Pb == min(Pb))
+    
+    if (minp <= Po) {
+      Po <- minp
+      CR <- t(matrix(candidate[posp[1], ]))
+      R <- CR
+      addpenalty[k, 1] <- PenaltyBB2(cij, R, ord[b], use_cpp = use_cpp)
+    } else {
+      R <- CR
+      addpenalty[k, 1] <- PenaltyBB2(cij, R, ord[b], use_cpp = use_cpp)
+    }
+    
+    candidate <- matrix(0, nrow(R), N)
+    Pb <- matrix(0, 1, 1)
+  }
+  
+  if (Pc == 0) {
+    Po <- 0
+  } else {
+    Po <- sum(addpenalty)
+  }
+  
+  return(list(cons = CR, pen = Po))
+}
