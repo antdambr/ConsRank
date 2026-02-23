@@ -15,7 +15,8 @@ consrank(
   gl = 100,
   ff = 0.4,
   cr = 0.9,
-  proc = FALSE
+  proc = FALSE,
+  use_cpp = TRUE
 )
 }
 \arguments{

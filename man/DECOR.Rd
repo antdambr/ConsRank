@@ -4,7 +4,16 @@
 \alias{DECOR}
 \title{Differential Evolution algorithm for Median Ranking}
 \usage{
-DECOR(X, Wk = NULL, NP = 15, L = 100, FF = 0.4, CR = 0.9, FULL = FALSE)
+DECOR(
+  X,
+  Wk = NULL,
+  NP = 15,
+  L = 100,
+  FF = 0.4,
+  CR = 0.9,
+  FULL = FALSE,
+  use_cpp = TRUE
+)
 }
 \arguments{
 \item{X}{A N by M data matrix, in which there are N judges and M objects to be judged. Each row is a ranking of the objects which are represented by the columns. Alternatively X can contain the rankings observed only once. In this case the argument Wk must be used}
