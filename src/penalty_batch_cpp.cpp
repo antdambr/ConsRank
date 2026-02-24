@@ -1,13 +1,7 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-//' Batch computation of PenaltyBB2 for multiple candidates (C++ implementation - FIXED)
- //' 
- //' @param cij Combined input matrix
- //' @param candidates Matrix where each row is a candidate ranking
- //' @param ord Order vector (indices, 1-based)
- //' @return Vector of penalties, one per candidate
- //' @keywords internal
+ //' @noRd
  // [[Rcpp::export]]
  NumericVector PenaltyBB2_batch_impl(NumericMatrix cij, NumericMatrix candidates, IntegerVector ord) {
    

@@ -1,6 +1,7 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
+//' @noRd
 // [[Rcpp::export]]
 NumericMatrix kemenydesign_impl(NumericMatrix X) {
   int n = X.nrow();

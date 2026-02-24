@@ -1,14 +1,7 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-//' Find branches for Branch-and-Bound (C++ implementation - FIXED)
-//' 
-//' @param R Current ranking MATRIX (1 row)
-//' @param ord Order vector (indices, 1-based)
-//' @param b Subset of positions (1-based)
-//' @param FULL Logical, if TRUE use full rankings (step=2)
-//' @return Matrix of candidate rankings
-//' @keywords internal
+//' @noRd
 // [[Rcpp::export]]
 NumericMatrix findbranches_impl(NumericMatrix R, IntegerVector ord, IntegerVector b, bool FULL) {
   

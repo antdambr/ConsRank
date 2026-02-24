@@ -1,13 +1,7 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-//' Score matrix calculation (C++ implementation)
- //' 
- //' Optimized version of scorematrix for better performance in BB algorithm
- //' 
- //' @param X Ranking vector (can be numeric vector or 1-row matrix)
- //' @return M x M score matrix
- //' @keywords internal
+ //' @noRd
  // [[Rcpp::export]]
  NumericMatrix scorematrix_cpp(SEXP X) {
    NumericVector x;

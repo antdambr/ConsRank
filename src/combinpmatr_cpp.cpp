@@ -1,12 +1,7 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-//' Combined input matrix (C++ implementation)
-//' 
-//' @param X A numeric matrix (N x M) where rows are judges and columns are objects
-//' @param Wk Optional numeric vector of weights for each ranking
-//' @return The M x M combined input matrix
-//' @keywords internal
+//' @noRd
 // [[Rcpp::export]]
 NumericMatrix combinpmatr_impl(NumericMatrix X, Nullable<NumericVector> Wk = R_NilValue) {
   int n = X.nrow();  // number of judges

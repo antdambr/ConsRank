@@ -78,8 +78,8 @@ categories, such as:
   \item Educational grading (fixed letter grades: A, B, C, D, F)
 }
 
-The search space is restricted to Z^{n\textbackslash b}, which contains
-\deqn{\sum_{b=1}^{n} b! \cdot S(n,b)}
+The search space is restricted to \eqn{Z^{n/b}}, which contains
+\deqn{\sum_{b=1}^{n} b! S(n,b)}
 rankings, where S(n,b) is the Stirling number of the second kind.
 
 \strong{Algorithm Selection Guidelines:}

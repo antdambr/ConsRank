@@ -47,8 +47,8 @@
 #'   \item Educational grading (fixed letter grades: A, B, C, D, F)
 #' }
 #' 
-#' The search space is restricted to Z^{n\textbackslash b}, which contains
-#' \deqn{\sum_{b=1}^{n} b! \cdot S(n,b)}
+#' The search space is restricted to \eqn{Z^{n/b}}, which contains
+#' \deqn{\sum_{b=1}^{n} b! S(n,b)}
 #' rankings, where S(n,b) is the Stirling number of the second kind.
 #' 
 #' \strong{Algorithm Selection Guidelines:}
@@ -176,7 +176,19 @@ mcbo <- function(X, nbuckets, wk = NULL, ps = TRUE,
                          use_cpp = use_cpp)
     
   } else if (algorithm == "decor") {
-    stop("DECoR algorithm not yet implemented in this version")
+    out <- DECoR_buckets(
+      cij = cij,
+      nbuckets = nbuckets,
+      nj = nj,
+      Wk = wk,
+      np = np,
+      gl = gl,
+      ff = ff,
+      cr = cr,
+      maxiter = itermax,
+      PS = ps,
+      use_cpp = use_cpp
+    )
   }
   
   toc <- proc.time()[3]
@@ -928,4 +940,391 @@ BBconsensusBuckts_phase1 <- function(RR, cij, nbuckets, PS = FALSE, use_cpp = TR
   }
   
   return(list(cons = CR, pen = Po))
+}
+
+# ══════════════════════════════════════════════════════════════════════════
+# DECoR algorithm for Median Constrained Bucket Order
+# Differential Evolution for Consensus Ranking with bucket constraints
+# Based on original code by Giulio Mazzeo and Antonio D'Ambrosio
+# ══════════════════════════════════════════════════════════════════════════
+
+# ══════════════════════════════════════════════════════════════════════════
+# DECoR algorithm for Median Constrained Bucket Order
+# Differential Evolution for Consensus Ranking with bucket constraints
+# Based on original code by Giulio Mazzeo and Antonio D'Ambrosio
+# ══════════════════════════════════════════════════════════════════════════
+
+DECoR_buckets <- function(cij, nbuckets, nj, Wk = NULL, 
+                          np = 10, gl = 100, ff = 0.4, cr = 0.8,
+                          maxiter = 10, PS = TRUE, use_cpp = TRUE) {
+  
+  tic <- proc.time()[3]
+  N <- ncol(cij)
+  
+  solutions <- matrix(0, 1, N)
+  Taos <- 0
+  Cs <- 0
+  
+  if (PS) {
+    message("DECoR algorithm: running ", maxiter, " iterations...")
+  }
+  
+  # Run multiple DECoR iterations
+  for (j in 1:maxiter) {
+    
+    dcb <- decorbuckets(
+      NP = np,
+      L = gl, 
+      FF = ff,
+      CR = cr,
+      cij = cij,
+      NJ = nj,
+      buckets = nbuckets,
+      use_cpp = use_cpp
+    )
+    
+    solutions <- rbind(solutions, dcb$ConsR)
+    Cs <- c(Cs, dcb$bestcost)
+    Taos <- c(Taos, dcb$Tau)
+    
+    if (PS && (j %% 5 == 0 || j == 1)) {
+      message("  Iteration ", j, "/", maxiter)
+    }
+  }
+  
+  # Remove initialization row
+  solutions <- solutions[-1, , drop = FALSE]
+  Taos <- Taos[-1]
+  Cs <- Cs[-1]
+  
+  # Find best solution
+  index <- which.max(Taos)
+  oversol <- solutions[index, , drop = FALSE]
+  TauX <- Taos[index]
+  Cost <- Cs[index]
+  
+  if (!is.matrix(oversol)) {
+    oversol <- matrix(oversol, nrow = 1)
+  }
+  
+  toc <- proc.time()[3]
+  eltime <- toc - tic
+  
+  if (PS) {
+    message("DECoR completed: Best Tau = ", round(TauX, 4))
+  }
+  
+  return(list(
+    Consensus = reordering(oversol), 
+    Tau = TauX, 
+    Eltime = eltime
+  ))
+}
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# Single DECoR run - one evolutionary cycle
+# ══════════════════════════════════════════════════════════════════════════
+
+decorbuckets <- function(NP, L, FF, CR, cij, NJ, buckets, use_cpp = TRUE) {
+  
+  tic <- proc.time()[3]
+  N <- nrow(cij)
+  
+  # ════════════════════════════════════════════════════════════════════════
+  # STEP 1: Initialize population with valid bucket solutions
+  # ════════════════════════════════════════════════════════════════════════
+  
+  # EFFICIENT population generation - no infinite loops!
+  genpop <- function(N, buckets) {
+    # Start with guaranteed coverage of all buckets
+    x <- rep(1:buckets, length.out = N)
+    # Shuffle to randomize
+    x <- sample(x)
+    return(x)
+  }
+  
+  population <- t(replicate(NP, genpop(N, buckets)))
+  
+  # ════════════════════════════════════════════════════════════════════════
+  # STEP 2: Evaluate initial population
+  # ════════════════════════════════════════════════════════════════════════
+  
+  costs <- taos <- matrix(0, NP, 1)
+  
+  for (i in 1:NP) {
+    COTA <- combincost(population[i, ], cij, NJ, use_cpp)
+    costs[i] <- COTA$cp
+    taos[i] <- COTA$tp
+  }
+  
+  # Store best individual
+  bestc <- min(costs)
+  bestind <- which(costs == min(costs))
+  bestT <- max(taos)
+  besti <- population[bestind, , drop = FALSE]
+  
+  # ════════════════════════════════════════════════════════════════════════
+  # STEP 3: Evolution loop
+  # ════════════════════════════════════════════════════════════════════════
+  
+  g <- 2
+  no_gain <- 0
+  
+  while (no_gain < L) {
+    
+    # Individuals mutation
+    for (i in 1:NP) {
+      
+      # MUTATION: rand/1/bin
+      evolution <- mutaterand1buckets(population, FF, i, buckets)
+      
+      # CROSSOVER
+      evolution <- crossoverbuckets(population[i, ], evolution, CR, buckets)
+      
+      # REPAIR: Discretization and bucket correction
+      evolution <- childclosintbuckets(evolution, buckets)
+      
+      # CRITICAL VALIDATION: Ensure exactly 'buckets' unique values
+      if (length(unique(evolution)) != buckets) {
+        # Repair failed - regenerate valid solution
+        evolution <- genpop(N, buckets)
+      }
+      
+      # EVALUATE
+      COTAN <- combincost(evolution, cij, NJ, use_cpp)
+      cost_new <- COTAN$cp
+      ta_new <- COTAN$tp
+      
+      # SELECTION: Keep better solution
+      if (cost_new < costs[i]) {
+        population[i, ] <- evolution
+        costs[i] <- cost_new
+        taos[i] <- ta_new
+      }
+    }
+    
+    # Store best individual of current generation
+    bestco <- min(costs)
+    bestc <- c(bestc, bestco)
+    bestind <- which.min(costs)
+    bestTa <- max(taos)
+    bestT <- c(bestT, bestTa)
+    bestin <- population[bestind, ]
+    besti <- rbind(besti, bestin)
+    
+    # Check if this generation improved solutions
+    if (bestc[g] == bestc[(g - 1)]) {
+      no_gain <- no_gain + 1
+    } else {
+      no_gain <- 0
+    }
+    
+    g <- g + 1
+  }
+  
+  # ════════════════════════════════════════════════════════════════════════
+  # STEP 4: Select ALL best solutions (with bucket validation)
+  # ════════════════════════════════════════════════════════════════════════
+  
+  indexes <- which(bestc == min(bestc))
+  
+  if (length(indexes) == 1) {
+    bests <- reordering(matrix(besti[indexes, ], 1, N))
+  } else {
+    bests <- reordering(besti[indexes, , drop = FALSE])
+  }
+  
+  # CRITICAL: Filter to keep only solutions with exactly 'buckets'
+  valid_idx <- apply(bests, 1, function(x) length(unique(x)) == buckets)
+  
+  if (sum(valid_idx) == 0) {
+    # No valid solutions found - regenerate one
+    warning("No solutions with exactly ", buckets, " buckets found. Regenerating...")
+    bests <- matrix(genpop(N, buckets), 1, N)
+    avgTau <- bestT[indexes[1]]
+  } else {
+    bests <- bests[valid_idx, , drop = FALSE]
+    avgTau <- bestT[indexes[valid_idx]]
+  }
+  
+  ConsR <- unique(bests)
+  
+  mycheck <- unique(avgTau)
+  if (length(mycheck) > 1) {
+    warning("Multiple Tau values found in best solutions")
+  }
+  
+  Tau <- matrix(rep(mycheck, nrow(ConsR)), nrow(ConsR), 1)
+  bestcost <- unique(bestc[indexes])
+  
+  toc <- proc.time()[3]
+  eltime <- toc - tic
+  
+  return(list(
+    ConsR = ConsR,
+    Tau = Tau,
+    besti = besti,
+    bestc = bestc,
+    bestcost = bestcost,
+    bests = bests,
+    avgTau = avgTau,
+    bestT = bestT,
+    Eltime = eltime
+  ))
+}
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# MUTATION: rand/1/bin (ORIGINAL LOGIC)
+# ══════════════════════════════════════════════════════════════════════════
+
+mutaterand1buckets <- function(X, FF, i, buckets) {
+  
+  D <- nrow(X)
+  
+  # Select 3 random individuals different from current
+  a <- sample(D)
+  
+  for (j in 1:3) {
+    if (a[j] == i) {
+      a[j] <- a[4]
+    }
+  }
+  
+  r1 <- a[1]
+  r2 <- a[2]
+  r3 <- a[3]
+  
+  # Apply mutation (Rand1Bin)
+  v <- X[r1, ] + FF * (X[r2, ] - X[r3, ])
+  
+  # Bound to valid range
+  v[v >= (buckets + 0.5)] <- buckets + 0.4
+  v[v <= 0.4] <- 0.5
+  
+  return(v)
+}
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# CROSSOVER (ORIGINAL LOGIC)
+# ══════════════════════════════════════════════════════════════════════════
+
+crossoverbuckets <- function(x, v, CR, buckets) {
+  
+  if (!is.matrix(x)) {
+    x <- matrix(x, 1, length(x))
+  }
+  
+  D <- ncol(x)
+  u <- matrix(0, 1, D)
+  
+  for (i in 1:D) {
+    if (runif(1) > CR) {
+      u[i] <- v[i]
+    } else {
+      u[i] <- x[i]
+    }
+  }
+  
+  # Bound to valid range
+  u[u > buckets] <- buckets
+  u[u < 1] <- 1
+  
+  return(u)
+}
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# REPAIR: Ensure exactly nbuckets unique values (ORIGINAL LOGIC)
+# ══════════════════════════════════════════════════════════════════════════
+
+childclosintbuckets <- function(r, buckets) {
+  
+  D <- length(r)
+  
+  # Closest integer
+  x <- round(r)
+  
+  # Correct out of bound
+  out_of_bounds <- which(x > buckets | x < 1)
+  if (length(out_of_bounds) > 0) {
+    x[out_of_bounds] <- sample(1:buckets, length(out_of_bounds), replace = TRUE)
+  }
+  
+  # ════════════════════════════════════════════════════════════════════════
+  # CRITICAL: Ensure exactly 'buckets' unique values - EFFICIENT VERSION
+  # ════════════════════════════════════════════════════════════════════════
+  
+  # Find missing buckets
+  present_buckets <- unique(x)
+  missing_buckets <- setdiff(1:buckets, present_buckets)
+  
+  if (length(missing_buckets) == 0) {
+    # Already has exactly 'buckets' unique values
+    return(x)
+  }
+  
+  # Find duplicates to replace
+  dup_idx <- which(duplicated(x))
+  
+  if (length(dup_idx) == 0) {
+    # No duplicates but missing buckets - force random positions
+    positions_to_replace <- sample(D, length(missing_buckets))
+    x[positions_to_replace] <- missing_buckets
+    return(x)
+  }
+  
+  # ════════════════════════════════════════════════════════════════════════
+  # EFFICIENT ASSIGNMENT - No loops!
+  # ════════════════════════════════════════════════════════════════════════
+  
+  n_missing <- length(missing_buckets)
+  n_dup <- length(dup_idx)
+  
+  if (n_missing <= n_dup) {
+    # Simple case: enough duplicates for all missing buckets
+    x[dup_idx[1:n_missing]] <- missing_buckets
+  } else {
+    # Not enough duplicates: need to replace more positions
+    # First, use all duplicates
+    x[dup_idx] <- missing_buckets[1:n_dup]
+    
+    # Then force remaining missing buckets into random positions
+    still_missing <- missing_buckets[(n_dup + 1):n_missing]
+    available_positions <- setdiff(1:D, dup_idx)
+    positions_to_replace <- sample(available_positions, length(still_missing))
+    x[positions_to_replace] <- still_missing
+  }
+  
+  return(x)
+}
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# HELPER: Compute cost and tau (ORIGINAL LOGIC with C++ optimization)
+# ══════════════════════════════════════════════════════════════════════════
+
+combincost <- function(ranking, cij, M, use_cpp = TRUE) {
+  
+  if (!is.matrix(ranking)) {
+    ranking <- matrix(ranking, 1, length(ranking))
+  }
+  
+  N <- ncol(ranking)
+  
+  # Compute score matrix (with C++ if available)
+  sij <- scorematrix(ranking, use_cpp = use_cpp)
+  
+  # Max distance
+  maxdist <- (N * (N - 1))
+  
+  # Computing the tau
+  t <- sum(sum(cij * sij)) / (M * (N * (N - 1)))
+  
+  # Computing the distance (from tau)
+  c <- (maxdist / 2) * (1 - t) * M
+  
+  return(list(tp = t, cp = c))
 }

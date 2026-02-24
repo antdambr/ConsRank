@@ -1,13 +1,7 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-//' Penalty calculation for Branch-and-Bound algorithm (C++ implementation)
- //' 
- //' @param cij Combined input matrix
- //' @param candidate Candidate ranking vector
- //' @param ord Order vector
- //' @return Penalty value
- //' @keywords internal
+ //' @noRd
  // [[Rcpp::export]]
  double PenaltyBB2_impl(NumericMatrix cij, NumericVector candidate, IntegerVector ord) {
    int n = ord.size();

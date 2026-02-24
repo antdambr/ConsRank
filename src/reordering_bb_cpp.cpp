@@ -1,11 +1,7 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-//' Reordering for Branch-and-Bound algorithm (C++ implementation)
- //' 
- //' @param RR Ranking vector to reorder
- //' @return Reordered ranking
- //' @keywords internal
+ //' @noRd
  // [[Rcpp::export]]
  NumericVector ReorderingBB_impl(NumericVector RR) {
    int k = RR.size();

@@ -1,14 +1,7 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-//' Kemeny design matrix (C++ implementation)
- //'
- //' Compute the design matrix for Kemeny distance calculation.
- //' This is an optimized C++ implementation of the kemenydesign function.
- //'
- //' @param X A numeric matrix where each row is a ranking
- //' @return Design matrix for Kemeny distance computation
- //' @keywords internal
+//' @noRd
  // [[Rcpp::export]]
  NumericMatrix kemenydesign_cpp(NumericMatrix X) {
    int n = X.nrow();
