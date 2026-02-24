@@ -42,7 +42,6 @@
 #'   Analysis, 11(1), 17-28.
 #'
 #' @seealso \code{\link{tabulaterows}} frequency distribution of a ranking data.
-#' @seealso \code{\link{combinpmatr_impl}} for the C++ implementation
 #'
 #' @export
 combinpmatr <- function(X, Wk = NULL, use_cpp = TRUE) {

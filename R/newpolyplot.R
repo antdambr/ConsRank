@@ -299,7 +299,7 @@ plot_polytope_4d_plotly <- function(X, L, Wk) {
   p <- add_points_plotly(p, structure$coord, indplot, X, structure$ranks, Wk, rr)
   
   # Configure layout
-  p <- p %>% plotly::layout(
+  p <- p |>plotly::layout(
     scene = list(
       xaxis = list(showticklabels = FALSE, showgrid = FALSE, 
                    zeroline = FALSE, title = ""),
@@ -554,7 +554,7 @@ add_polytope_edges_plotly <- function(p, structure) {
   
   # Helper to add segment
   add_seg <- function(p, pt1, pt2, color = "black", width = 2) {
-    p %>% plotly::add_trace(
+    p |>plotly::add_trace(
       x = c(pt1[1], pt2[1]),
       y = c(pt1[2], pt2[2]),
       z = c(pt1[3], pt2[3]),
@@ -694,7 +694,7 @@ add_points_plotly <- function(p, coord, indplot, X, ranks, Wk, rr) {
   
   if (is.null(Wk)) {
     # Simple markers
-    p <- p %>% plotly::add_trace(
+    p <- p |>plotly::add_trace(
       x = coord[indplot, 1],
       y = coord[indplot, 2],
       z = coord[indplot, 3],
@@ -712,7 +712,7 @@ add_points_plotly <- function(p, coord, indplot, X, ranks, Wk, rr) {
     idwk <- match_rankings_to_weights(X, ranks)
     sizes <- sqrt(((Wk[idwk] / sum(Wk)) / (25 * pi))) * 100
     
-    p <- p %>% plotly::add_trace(
+    p <- p |>plotly::add_trace(
       x = coord[indplot, 1],
       y = coord[indplot, 2],
       z = coord[indplot, 3],

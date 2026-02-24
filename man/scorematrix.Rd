@@ -8,6 +8,8 @@ scorematrix(X, use_cpp = TRUE)
 }
 \arguments{
 \item{X}{a ranking (must be a row vector or, better, a matrix with one row and M columns)}
+
+\item{use_cpp}{Logical. If TRUE (default), uses C++ implementation for faster computation. If FALSE, uses the R implementation.}
 }
 \value{
 the M by M score matrix

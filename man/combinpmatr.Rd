@@ -55,8 +55,6 @@ Emond, E. J., and Mason, D. W. (2002). A new rank correlation coefficient
 }
 \seealso{
 \code{\link{tabulaterows}} frequency distribution of a ranking data.
-
-\code{\link{combinpmatr_impl}} for the C++ implementation
 }
 \author{
 Antonio D'Ambrosio \email{antdambr@unina.it}

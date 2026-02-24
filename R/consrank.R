@@ -13,6 +13,7 @@
 #' @param ff For DECOR algorithm only: the scaling rate for mutation. Must be in [0,1]. ff=0.4 is the default option.
 #' @param cr For DECOR algorithm only: the crossover range. Must be in [0,1]. cr=0.9 is the default option.
 #' @param proc For BB algorithm only: proc=TRUE allows the branch and bound algorithm to work in difficult cases, i.e. when the number of objects is larger than 15 or 25. proc=FALSE is the default option
+#' @param use_cpp Logical. If TRUE (default), uses C++ implementation for faster computation. If FALSE, uses the R implementation.
 #' 
 #' @details The BB algorithm can take long time to find the solutions if the number objects to be ranked is 
 #' large with some missing (>15-20 if full=FALSE, <25-30 if full=TRUE). 

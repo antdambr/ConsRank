@@ -3,6 +3,7 @@
 #' Given a ranking, it computes the score matrix as defined by Emond and Mason (2002)
 #'
 #' @param X a ranking (must be a row vector or, better, a matrix with one row and M columns)
+#' @param use_cpp Logical. If TRUE (default), uses C++ implementation for faster computation. If FALSE, uses the R implementation.
 #'
 #' @return the M by M score matrix
 #'
@@ -72,32 +73,3 @@ scorematrix <- function (X, use_cpp=TRUE) {
   
   sm
 }
-
-# scorematrix <- function (X) {
-#   
-#   ### SCORE MATRIX OF RANK DATA ACCORDING EMOND AND MASON
-#   
-#   itemnames<-names(X)
-#   if (is(X,"numeric") & !is(X,"matrix")){
-#     X<-matrix(X,ncol=length(X))
-#   }
-#   
-#   c<-ncol(X)
-#   
-#   #X must be a row vector containing a ranking of m objects
-#   sm<-matrix(0,c,c)
-#   colnames(sm)<-itemnames
-#   row.names(sm)<-itemnames
-#   
-#   for (j in 1:c){
-#     diffs<-sign(X[j]-X[setdiff(1:c,j)])
-#     ind<-setdiff(1:c,j)
-#     sm[j,ind]<-diffs
-#   }
-#   
-#   idn<-is.na(sm)
-#   sm<-((sm<=0)*2-1)-diag(c)
-#   sm[idn]<-0
-#   sm
-# }
-# 

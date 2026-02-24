@@ -94,21 +94,17 @@ For stochastic algorithms (quick, decor), consider running multiple times
 }
 \examples{
 \dontrun{
-# Simple example with 10 judges ranking 5 items into 3 buckets
+# Simple example with 98 judges ranking 5 items into 3 buckets
 data(Idea)
 RevIdea <- 6 - Idea  # Reverse ranking
 CR <- mcbo(RevIdea, nbuckets = 3, algorithm = "BB")
 print(CR$Consensus)
 print(CR$Tau)
 
-# Larger dataset with Quick algorithm
+# Large dataset with Quick algorithm
 data(EMD)
 CR_quick <- mcbo(EMD[,1:15], nbuckets = 5, wk = EMD[,16], 
                  algorithm = "quick", itermax = 20)
-
-# Very large dataset with DECoR
-# CR_decor <- mcbo(large_data, nbuckets = 7, algorithm = "decor",
-#                  np = 20, itermax = 100)
 }
 
 }
@@ -117,14 +113,6 @@ D'Ambrosio, A., Iorio, C., Staiano, M., and Siciliano, R. (2019).
 Median constrained bucket order rank aggregation. 
 Computational Statistics, 34(2), 787-802. 
 \doi{10.1007/s00180-018-0858-z}
-
-Emond, E. J., and Mason, D. W. (2002). 
-A new rank correlation coefficient with application to the consensus ranking problem. 
-Journal of Multi-Criteria Decision Analysis, 11(1), 17-28.
-
-Kemeny, J. G., and Snell, L. J. (1962). 
-Preference ranking: an axiomatic approach. 
-Mathematical models in the social sciences, 9-23.
 }
 \seealso{
 \code{\link{consrank}} for unconstrained consensus ranking
@@ -148,6 +136,8 @@ Antonio D'Ambrosio \email{antdambr@unina.it}
 \keyword{Median}
 \keyword{Rank}
 \keyword{aggregation}
+\keyword{bucket}
+\keyword{constrained}
 \keyword{distance}
 \keyword{order}
 \keyword{ranking}
