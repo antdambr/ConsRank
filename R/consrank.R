@@ -2,10 +2,10 @@
 #'
 #'Branch-and-bound, Quick , FAST and DECOR algorithms to find consensus (median) ranking according to the Kemeny's axiomatic approach. The median ranking(s) can be restricted to be necessarily a full ranking, namely without ties   
 #'
-#' @param X A n by m data matrix, in which there are n judges and m objects to be judged. Each row is a ranking of the objects which are represented by the columns. If X contains the rankings observed only once, the argument wk can be used
+#' @param X A n by m data matrix, in which there are n judges and m objects to be judged. Each row is a ranking of the objects which are represented by the columns. If X contains the rankings observed only once, the argument wk can be used. Either X or cij must be given
 #' @param wk Optional: the frequency of each ranking in the data
 #' @param ps If PS=TRUE, on the screen some information about how many branches are processed are displayed.
-#' @param algorithm Specifies the used algorithm. One among "BB", "quick", "fast" and "decor". algorithm="BB" is the default option.
+#' @param algorithm Specifies the used algorithm. One among "BB", "quick", "fast", "decor" and "BOLT". algorithm="BB" is the default option.
 #' @param full Specifies if the median ranking must be searched in the universe of rankings including all the possible ties (full=FALSE) or in the restricted space of full rankings (permutations). full=FALSE is the default option.
 #' @param itermax maximum number of iterations for FAST and DECOR algorithms. itermax=10 is the default option.
 #' @param np For DECOR algorithm only: the number of population individuals. np=15 is the default option.
@@ -14,17 +14,24 @@
 #' @param cr For DECOR algorithm only: the crossover range. Must be in [0,1]. cr=0.9 is the default option.
 #' @param proc For BB algorithm only: proc=TRUE allows the branch and bound algorithm to work in difficult cases, i.e. when the number of objects is larger than 15 or 25. proc=FALSE is the default option
 #' @param use_cpp Logical. If TRUE (default), uses C++ implementation for faster computation. If FALSE, uses the R implementation.
+#' @param otp For BOLT algorithm only: if TRUE (default), the optimal tie partitioning step is used (see \code{\link{bolt}}).
+#' @param maxjudges For BOLT algorithm only: maximum number of distinct rankings of the judges used as starting solutions (see \code{\link{bolt}}). Default Inf (all of them).
+#' @param cij The combined input matrix (m by m, see \code{\link{combinpmatr}}), to be given instead of X. All the algorithms depend on the data only through this matrix (Emond and Mason, 2002). With cij, the argument wk is ignored and the rankings of the judges are not used as starting solutions by BOLT
+#' @param nj The number of judges (the sum of the weights, if any) that produced cij. Required when cij is given: it is used to compute the averaged TauX
 #' 
 #' @details The BB algorithm can take long time to find the solutions if the number objects to be ranked is 
 #' large with some missing (>15-20 if full=FALSE, <25-30 if full=TRUE). 
 #' quick algorithm works with a large number of items to be ranked. The solution is quite accurate. 
 #' fast algorithm works with a large number of items to be ranked by repeating several times the quick algorithm with different random starting points.
 #' decor algorithm works with a very large number of items to be ranked. 
+#' BOLT algorithm is a deterministic heuristic that works with a very large number of items (even more than one thousand), see \code{\link{bolt}}.
 #' For decor algorithm, empirical evidence shows that the number of population individuals (the 'np' parameter) can be set equal to 10, 20 or 30
 #' for problems till 20, 50 and 100 items. Both scaling rate and crossover ratio (parameters
 #' 'ff' and 'cr') must be set by the user. The default options (ff=0.4, cr=0.9) work well
 #' for a large variety of data sets
 #' All algorithms allow the user to set the option 'full=TRUE' if the median ranking(s) must be searched in the restricted space of permutations instead of in the unconstrained universe of rankings of n items including all possible ties 
+#' 
+#' Instead of the data X, the combined input matrix cij can be given, together with the number of judges nj. This is useful when only the pairwise preferences are available, or when the median ranking of many subsets of the data is needed (the combined input matrix of a group is the sum of those of its parts).
 #' 
 #'  
 #' @return a "list" containing the following components:
@@ -40,6 +47,8 @@
 #' # each rankings to have rank 1 = "most associated" and rank 5 = "least associated"
 #' CR<-consrank(RevIdea)
 #' CR<-consrank(RevIdea,algorithm="quick")
+#' # the same median ranking from the combined input matrix
+#' CR2<-consrank(cij=combinpmatr(RevIdea),nj=nrow(RevIdea))
 #' #CR<-consrank(RevIdea,algorithm="fast",itermax=10)
 #' #not run
 #' #data(EMD)
@@ -72,7 +81,7 @@
 #' @importFrom proxy dist
 #' @importFrom gtools combinations
 #' 
-#' @seealso \code{\link{iwquickcons}}
+#' @seealso \code{\link{iwquickcons}}, \code{\link{bolt}}, \code{\link{mcbo}}
 #' 
 #' @export
 
@@ -91,7 +100,7 @@
 
 
 #consrank<-function(X,wk=NULL,ps=TRUE,algorithm="BB",full=FALSE,itermax=10,np=15,gl=100,ff=0.4,cr=0.9,proc=FALSE){
-consrank <- function(X, wk=NULL, ps=TRUE, algorithm="BB", full=FALSE, itermax=10, np=15, gl=100, ff=0.4, cr=0.9, proc=FALSE, use_cpp=TRUE) {
+consrank <- function(X=NULL, wk=NULL, ps=TRUE, algorithm="BB", full=FALSE, itermax=10, np=15, gl=100, ff=0.4, cr=0.9, proc=FALSE, use_cpp=TRUE, otp=TRUE, maxjudges=Inf, cij=NULL, nj=NULL) {
   # X:         a N by M data matrix in which there are N judges and M objects to be judged. 
   #            Each row is a ranking of the objects which are represented by the columns. 
   #            Alternatively X can contain the rankings observed only once in the sample. 
@@ -128,44 +137,57 @@ consrank <- function(X, wk=NULL, ps=TRUE, algorithm="BB", full=FALSE, itermax=10
   
   
   
-  if (is(X,"data.frame")) {
-    #colnames(X)=NULL
-    X<-as.matrix(X)
+  # either the data X or the combined input matrix cij (with nj)
+  cij <- checkXcij(X, cij, nj, wk)
+  cijgiven <- !is.null(cij)
+  if (cijgiven) wk <- NULL
+  
+  if (!cijgiven) {
+    
+    if (is(X,"data.frame")) {
+      #colnames(X)=NULL
+      X<-as.matrix(X)
+    }
+    
+    if (is(nrow(X),"NULL")){X<-matrix(X,nrow<-1)}
+    
   }
   
-  if (is(nrow(X),"NULL")){X<-matrix(X,nrow<-1)}
+  # number of judges and of objects
+  nr <- if (cijgiven) nj else nrow(X)
+  nc <- if (cijgiven) ncol(cij) else ncol(X)
   
   if(algorithm=="BB"){ #if1 
     
     #-- start check 1: if there is a larger number of objects maybe it is better use another algorithm
     if (full==FALSE & proc==FALSE){
       
-      if (nrow(X)>1 & ncol(X)>15){ 
+      if (nr>1 & nc>15){ 
         stop('the number of items is larger than 15. If data matrix contains several ties 
                or if there are few judges, choose another algorthm (Quick, FAST or DECOR). If you want use the Branch-and-bound algorithm, then 
                set proc="TRUE"')
         #end check 1
-      } else {out <- EMConsn(X,Wk=wk,PS=ps,use_cpp=cpp_available)}#end condition full false   
+      } else {out <- EMConsn(X,Wk=wk,PS=ps,use_cpp=cpp_available,cij=cij,nj=nj)}#end condition full false   
       
       
     } else if (full==TRUE & proc==FALSE) { 
       
       #-- start check 2: if there is a larger number of objects maybe it is better use another algorithm
       
-      if (nrow(X)>1 & ncol(X)>25){
+      if (nr>1 & nc>25){
         stop('the number of items is larger than 25. If data matrix contains several ties 
                or if there are few judges, choose another algorthm (Quick, FAST or DECOR). If you want use the Branch-and-bound algorithm, then 
                set proc="TRUE"')
         #end check 2
-      } else { out <- BBFULLn(X,Wk=wk,PS=ps,use_cpp=cpp_available) }#end condition full true 
+      } else { out <- BBFULLn(X,Wk=wk,PS=ps,use_cpp=cpp_available,cij=cij,nj=nj) }#end condition full true 
       
     } else if (full==FALSE & proc==TRUE){
       
-      out <- EMConsn(X,Wk=wk,PS=ps,use_cpp=cpp_available)
+      out <- EMConsn(X,Wk=wk,PS=ps,use_cpp=cpp_available,cij=cij,nj=nj)
       
     } else if (full==TRUE & proc==TRUE){
       
-      out <- BBFULLn(X,Wk=wk,PS=ps,use_cpp=cpp_available)
+      out <- BBFULLn(X,Wk=wk,PS=ps,use_cpp=cpp_available,cij=cij,nj=nj)
       
     }
     
@@ -177,24 +199,82 @@ consrank <- function(X, wk=NULL, ps=TRUE, algorithm="BB", full=FALSE, itermax=10
   #-- Quick algorithm
   
   if (algorithm=="quick") {
-    out <- QuickConsn(X,Wk=wk, FULL=full, PS=ps, use_cpp=cpp_available)
+    out <- QuickConsn(X,Wk=wk, FULL=full, PS=ps, use_cpp=cpp_available, cij=cij, nj=nj)
   } 
   
   #-- FAST algorithm
   
   if (algorithm=="fast"){
-    out <- FASTconsn(X, Wk=wk, maxiter=itermax, FULL=full, PS=ps, use_cpp=cpp_available)
+    out <- FASTconsn(X, Wk=wk, maxiter=itermax, FULL=full, PS=ps, use_cpp=cpp_available, cij=cij, nj=nj)
   } 
   
   #-- DECOR
   
   if (algorithm=="decor"){
-    out<-FASTDECORn(X,Wk=wk,maxiter=itermax,NP=np,L=gl,FF=ff,CR=cr,FULL=full,PS=ps,use_cpp=cpp_available)
+    out<-FASTDECORn(X,Wk=wk,maxiter=itermax,NP=np,L=gl,FF=ff,CR=cr,FULL=full,PS=ps,use_cpp=cpp_available,cij=cij,nj=nj)
+  }
+  
+  #-- BOLT
+  
+  if (algorithm=="BOLT"){
+    out <- bolt(X, wk=wk, full=full, otp=otp, maxjudges=maxjudges, ps=FALSE, cij=cij, nj=nj)
   }
   
   return(out)
   
 }
+#---------------------------------------------------------------------------------------------------------------------
+
+# Numerical tolerance for the comparisons of penalties in the branch-and-bound
+# and Quick algorithms, relative to the scale of the combined input matrix: with
+# non-integer weights the sums of the elements of cij are affected by rounding
+# errors, and exact comparisons could discard the right branches. With integer
+# weights the penalties are integers and the results do not change.
+
+bbtol <- function(cij) {
+  1e-9 * sum(abs(cij))
+}
+
+# Sets to zero the elements of cij that are zero up to rounding errors (their
+# sign is used by the branch-and-bound algorithm)
+
+cleancij <- function(cij) {
+  s <- max(abs(cij))
+  if (s > 0) {
+    cij[abs(cij) <= 1e-10 * s] <- 0
+  }
+  cij
+}
+
+# Checks the input of consrank, mcbo and bolt: either the data X or the combined
+# input matrix cij, with nj the number of judges. Returns cij (NULL if X is given)
+
+checkXcij <- function(X, cij, nj, wk = NULL) {
+  if (is.null(X) && is.null(cij)) {
+    stop("either X or cij must be given")
+  }
+  if (!is.null(X) && !is.null(cij)) {
+    stop("give either X or cij, not both")
+  }
+  if (is.null(cij)) {
+    return(NULL)
+  }
+  cij <- as.matrix(cij)
+  if (nrow(cij) != ncol(cij)) {
+    stop("cij must be a square matrix (the combined input matrix)")
+  }
+  if (is.null(nj)) {
+    stop("nj (the number of judges, or the sum of the weights) must be given with cij")
+  }
+  if (!is.numeric(nj) || length(nj) != 1 || nj <= 0) {
+    stop("nj must be a positive number")
+  }
+  if (!is.null(wk)) {
+    warning("wk is ignored when cij is given")
+  }
+  cij
+}
+
 #---------------------------------------------------------------------------------------------------------------------
 
 breakties<-function(X){
@@ -209,7 +289,7 @@ breakties<-function(X){
 
 #----------------------------------------------------------------------------------------------------------------------------
 
-EMConsn <- function(X,Wk=NULL,PS=TRUE,use_cpp=TRUE)  {
+EMConsn <- function(X,Wk=NULL,PS=TRUE,use_cpp=TRUE, cij=NULL, nj=NULL)  {
   #Emond and Mason Branch and Bound algorithm to find median ranking
   #X is a data matrix in which the rows are the judges and the columns indicates the objects
   #Wk is the vector of weigths
@@ -221,27 +301,42 @@ EMConsn <- function(X,Wk=NULL,PS=TRUE,use_cpp=TRUE)  {
   
   
   
-  M <- nrow(X)
-  N<-ncol(X)
+  # the combined input matrix can be given instead of the data (cij, with nj
+  # the number of judges)
+  cijgiven <- !is.null(cij)
+  if (cijgiven) {
+    M <- nj
+    NJ <- nj
+    N <- ncol(cij)
+    X <- matrix(0, 0, N, dimnames = list(NULL, colnames(cij)))
+  } else {
+    M <- nrow(X)
+    N<-ncol(X)
+  }
   callps<-PS
   tic <- proc.time()[3]
-  if (M==1) {
+  if (M==1 && !cijgiven) {
     
     consensus <- X
     TauX <- 1
     
   } else {
     
-    if (!is(Wk,"NULL")) {
+    if (!cijgiven) {
+      if (!is(Wk,"NULL")) {
       
-      if (is(Wk,"numeric")) {
-        Wk<-matrix(Wk,ncol=1)
+        if (is(Wk,"numeric")) {
+          Wk<-matrix(Wk,ncol=1)
+        }
+      
+        cij <- combinpmatr(X,Wk,use_cpp=use_cpp)
+      } else {
+        cij <- combinpmatr(X,use_cpp=use_cpp)
       }
-      
-      cij <- combinpmatr(X,Wk,use_cpp=use_cpp)
-    } else {
-      cij <- combinpmatr(X,use_cpp=use_cpp)
     }
+    
+    # elements of cij equal to zero up to rounding errors
+    cij <- cleancij(cij)
     
     ##some adjustment made on march 2023
     if (sum(cij==0)==length(cij)){
@@ -418,6 +513,7 @@ BBconsensus <- function(RR,cij,FULL=FALSE,PS=FALSE, use_cpp=TRUE) {
   #References: Amodio et al.,2015; D'Ambrosio et al., 2016.
   
   CR<-RR
+  tol <- bbtol(cij)
   sij<-scorematrix(RR, use_cpp=use_cpp)
   Po <- sum(abs(cij))-sum(cij*sij)
   a <- t(matrix(sort(RR,decreasing = TRUE)))
@@ -469,7 +565,7 @@ BBconsensus <- function(RR,cij,FULL=FALSE,PS=FALSE, use_cpp=TRUE) {
       #   Pb<-matrix(Pb[-1,],1,1)
       # }
       # print(Pb)
-      if (Pb[[aa]]==0) {
+      if (abs(Pb[[aa]]) <= tol) {
         
         CR <- R
         Po <- 0
@@ -510,9 +606,9 @@ BBconsensus <- function(RR,cij,FULL=FALSE,PS=FALSE, use_cpp=TRUE) {
     }
     
     minp<-min(Pb)
-    posp<-which(Pb==min(Pb))
+    posp<-which(Pb <= min(Pb) + tol)
     
-    if (minp<=Po) {
+    if (minp <= Po + tol) {
       Po<-minp
       CR<-t(matrix(candidate[posp[1],]))
       R<-CR
@@ -546,6 +642,7 @@ BBconsensus2 <- function(RR,cij,Po,PS=TRUE,FULL=FALSE,use_cpp=use_cpp) {
   ##Core code for the computation of the consensus ranking. Branch-and-bound 
   ##algorithm by Emond and Mason
   ForFULL<-FULL
+  tol <- bbtol(cij)
   CR<-RR
   a <- t(matrix(sort(RR)))
   ord <- t(matrix(order(RR)))
@@ -692,11 +789,11 @@ BBconsensus2 <- function(RR,cij,Po,PS=TRUE,FULL=FALSE,use_cpp=use_cpp) {
     #AccPen = BR.P
     
     
-    SSP<-matrix(which(BR.P==min(BR.P)))
+    SSP<-matrix(which(BR.P <= min(BR.P) + tol))
     MinP<-min(BR.P)
     PenMin<-Po-MinP
     
-    if (PenMin==0) {
+    if (PenMin <= tol) {
       
       #CR=t(matrix(BR.R[SSP,]))
       CR<-matrix(BR.R[SSP,],length(SSP),nobj)
@@ -772,7 +869,7 @@ branches <- function(brR, cij, b, Po, ord, Pb, FULL=FALSE, use_cpp=TRUE) {
     addpenalty <- PenaltyBB2_batch_impl(cij, candidate, ord_subset)
     Pbr <- addpenalty + Pb_vec
     
-    valid_idx <- which(Pbr <= Po)
+    valid_idx <- which(Pbr <= Po + bbtol(cij))
     
     if (length(valid_idx) == 0) {
       return(list(cR = NULL, pcR = NULL))
@@ -801,7 +898,7 @@ branches <- function(brR, cij, b, Po, ord, Pb, FULL=FALSE, use_cpp=TRUE) {
     CR[gm,] <- candidate[gm,]
     addpenalty[gm,] <- PenaltyBB2(cij, candidate[gm,], ord[b], use_cpp=use_cpp)  # ← ord[b]!
     
-    if ((Pb[gm] + addpenalty[gm,]) > Po) {
+    if ((Pb[gm] + addpenalty[gm,]) > Po + bbtol(cij)) {
       CR[gm,] <- NA
       addpenalty[gm,] <- NA
     }
@@ -1371,7 +1468,7 @@ findbranches <- function(R, ord, b, FULL=FALSE, use_cpp=TRUE) {
 
 #---------------------------------------------------------------------------------------------------
 
-QuickConsn <- function(X,Wk=NULL, FULL=FALSE,PS=FALSE, use_cpp=TRUE)   {
+QuickConsn <- function(X,Wk=NULL, FULL=FALSE,PS=FALSE, use_cpp=TRUE, cij=NULL, nj=NULL)   {
   
   
   if (is(X,"data.frame")) {
@@ -1382,26 +1479,41 @@ QuickConsn <- function(X,Wk=NULL, FULL=FALSE,PS=FALSE, use_cpp=TRUE)   {
   callfull<-FULL
   callps<-PS
   
-  M <- nrow(X)
-  N<-ncol(X)
+  # the combined input matrix can be given instead of the data (cij, with nj
+  # the number of judges)
+  cijgiven <- !is.null(cij)
+  if (cijgiven) {
+    M <- nj
+    NJ <- nj
+    N <- ncol(cij)
+    X <- matrix(0, 0, N, dimnames = list(NULL, colnames(cij)))
+  } else {
+    M <- nrow(X)
+    N<-ncol(X)
+  }
   tic <- proc.time()[3]
   
-  if (M==1) {
+  if (M==1 && !cijgiven) {
     
     consensus <- X
     Taux <- 1
     
   } else {
-    if (!is(Wk,"NULL")) {
+    if (!cijgiven) {
+      if (!is(Wk,"NULL")) {
       
-      if (is(Wk,"numeric")) {
-        Wk<-matrix(Wk,ncol=1)
+        if (is(Wk,"numeric")) {
+          Wk<-matrix(Wk,ncol=1)
+        }
+      
+        cij <- combinpmatr(X,Wk, use_cpp=use_cpp)
+      } else {
+        cij <- combinpmatr(X, use_cpp=use_cpp)
       }
-      
-      cij <- combinpmatr(X,Wk, use_cpp=use_cpp)
-    } else {
-      cij <- combinpmatr(X, use_cpp=use_cpp)
     }
+    
+    # elements of cij equal to zero up to rounding errors
+    cij <- cleancij(cij)
     
     ##some adjustment made on march 2023
     if (sum(cij==0)==length(cij)){
@@ -1463,7 +1575,7 @@ QuickConsn <- function(X,Wk=NULL, FULL=FALSE,PS=FALSE, use_cpp=TRUE)   {
     }
     
     if (howcons>1) {
-      nco<-which(Taux==max(Taux))
+      nco<-which(Taux >= max(Taux) - 1e-12)
       if (length(nco)>1) {
         consensus<-consensus[nco,]
         Taux<-matrix(rep(max(Taux),nrow(consensus)),nrow(consensus),1)
@@ -1482,7 +1594,7 @@ QuickConsn <- function(X,Wk=NULL, FULL=FALSE,PS=FALSE, use_cpp=TRUE)   {
 
 #------------------------------------------------------------------------------------
 
-FASTconsn <- function(X, Wk=NULL, maxiter=50, FULL=FALSE, PS=FALSE, use_cpp=TRUE)   {
+FASTconsn <- function(X, Wk=NULL, maxiter=50, FULL=FALSE, PS=FALSE, use_cpp=TRUE, cij=NULL, nj=NULL)   {
   
   
   if (is(X,"data.frame")) {
@@ -1490,25 +1602,40 @@ FASTconsn <- function(X, Wk=NULL, maxiter=50, FULL=FALSE, PS=FALSE, use_cpp=TRUE
     X<-as.matrix(X)
   }
   
-  M <- nrow(X)
-  N<-ncol(X)
+  # the combined input matrix can be given instead of the data (cij, with nj
+  # the number of judges)
+  cijgiven <- !is.null(cij)
+  if (cijgiven) {
+    M <- nj
+    NJ <- nj
+    N <- ncol(cij)
+    X <- matrix(0, 0, N, dimnames = list(NULL, colnames(cij)))
+  } else {
+    M <- nrow(X)
+    N<-ncol(X)
+  }
   
   tic <- proc.time()[3]
-  if (M==1) {
+  if (M==1 && !cijgiven) {
     CR <- X
     Taux <- 1
     colnames(CR) <- colnames(X)
   } else {
-    if (!is(Wk,"NULL")) {
+    if (!cijgiven) {
+      if (!is(Wk,"NULL")) {
       
-      if (is(Wk,"numeric")) {
-        Wk<-matrix(Wk,ncol=1)
+        if (is(Wk,"numeric")) {
+          Wk<-matrix(Wk,ncol=1)
+        }
+      
+        cij <- combinpmatr(X,Wk, use_cpp=use_cpp)
+      } else {
+        cij <- combinpmatr(X, use_cpp=use_cpp)
       }
-      
-      cij <- combinpmatr(X,Wk, use_cpp=use_cpp)
-    } else {
-      cij <- combinpmatr(X, use_cpp=use_cpp)
     }
+    
+    # elements of cij equal to zero up to rounding errors
+    cij <- cleancij(cij)
     
     ##some adjustment made on march 2023
     if (sum(cij==0)==length(cij)){
@@ -1586,10 +1713,10 @@ FASTconsn <- function(X, Wk=NULL, maxiter=50, FULL=FALSE, PS=FALSE, use_cpp=TRUE
     }
     #}
     CR<-reordering(CR)
-    indice<-which(Taux==max(Taux))
+    indice<-which(Taux >= max(Taux) - 1e-12)
     Taux<-max(Taux)
     CR<-matrix(CR[indice,],ncol=N)
-    if (nrow(CR>1)){
+    if (nrow(CR)>1){
       CR<-unique(CR)
     }
     if (!is(dim(CR),"NULL")) {
@@ -1644,7 +1771,9 @@ DECOR <- function(X,Wk=NULL,NP=15,L=100,FF=0.4,CR=0.9,FULL=FALSE, use_cpp=TRUE) 
     ##some adjustment made on march
     if (sum(cij==0)==length(cij)){
       print("Combined Input Matrix contains only zeros: any ranking in the reference universe is a median ranking. The output contains the identity permutation")
-      return(list(Consensus=seq(1:N), Tau=0, Eltime=NA))
+      cr <- matrix(seq(1:N),nrow=1)
+      colnames(cr) <- colnames(X)
+      return(list(Consensus=cr, Tau=0, Eltime=NA))
       
     } 
     
@@ -1801,7 +1930,10 @@ DECORcore <- function(cij,NJ,NP=15,L=50,FF=0.4,CR=0.9,FULL=FALSE,use_cpp=TRUE){
   
   # Store initial generation (g=1)
   bestc_vec[1] <- min(costs)
-  bestind <- which(costs == min(costs))
+  # the first best individual (as in the next generations): with several
+  # individuals with the same best cost, which(costs == min(costs)) gave more
+  # than one row and the assignment to besti_mat[1, ] failed
+  bestind <- which.min(costs)
   bestT_vec[1] <- max(taos)
   besti_mat[1, ] <- population[bestind, ]
   
@@ -2005,7 +2137,7 @@ DECORcore <- function(cij,NJ,NP=15,L=50,FF=0.4,CR=0.9,FULL=FALSE,use_cpp=TRUE){
 
 #----------------------------------------------------------------------------------------------------------------
 
-FASTDECORn <- function(X,Wk=NULL,maxiter=10,NP=15,L=100,FF=0.4,CR=0.9,FULL=FALSE,PS=TRUE,use_cpp=TRUE){
+FASTDECORn <- function(X,Wk=NULL,maxiter=10,NP=15,L=100,FF=0.4,CR=0.9,FULL=FALSE,PS=TRUE,use_cpp=TRUE, cij=NULL, nj=NULL){
   
   #check if X is a matrix
   if (is(X,"data.frame")) {
@@ -2013,39 +2145,53 @@ FASTDECORn <- function(X,Wk=NULL,maxiter=10,NP=15,L=100,FF=0.4,CR=0.9,FULL=FALSE
     X<-as.matrix(X)
   }
   
-  M <- nrow(X)
-  N<-ncol(X)
+  # the combined input matrix can be given instead of the data (cij, with nj
+  # the number of judges)
+  cijgiven <- !is.null(cij)
+  if (cijgiven) {
+    M <- nj
+    NJ <- nj
+    N <- ncol(cij)
+    X <- matrix(0, 0, N, dimnames = list(NULL, colnames(cij)))
+  } else {
+    M <- nrow(X)
+    N<-ncol(X)
+  }
   tic <- proc.time()[3]  
   
   #check if there are trivial solutions
   
-  if (M==1) { 
+  if (M==1 && !cijgiven) { 
     consensus <- X
     TauX <- 1
     colnames(consensus)<-colnames(X)
     
   } else {
     
-    if (!is(Wk,"NULL")) {
+    if (!cijgiven) {
+      if (!is(Wk,"NULL")) {
       
-      if (is.numeric(Wk)) {
-        Wk<-matrix(Wk,ncol=1)
-        NJ<-sum(Wk)
+        if (is.numeric(Wk)) {
+          Wk<-matrix(Wk,ncol=1)
+          NJ<-sum(Wk)
+        }
+      
+        cij <- combinpmatr(X,Wk,use_cpp=use_cpp)
+      
+      } else {
+      
+        cij <- combinpmatr(X,use_cpp=use_cpp)
+        NJ<-nrow(X)
       }
-      
-      cij <- combinpmatr(X,Wk,use_cpp=use_cpp)
-      
-    } else {
-      
-      cij <- combinpmatr(X,use_cpp=use_cpp)
-      NJ<-nrow(X)
     }
     
     
     ##some adjustment made on march
     if (sum(cij==0)==length(cij)){
       print("Combined Input Matrix contains only zeros: any ranking in the reference universe is a median ranking. The output contains the identity permutation")
-      return(list(Consensus=seq(1:N), Tau=0, Eltime=NA))
+      cr <- matrix(seq(1:N),nrow=1)
+      colnames(cr) <- colnames(X)
+      return(list(Consensus=cr, Tau=0, Eltime=NA))
       
     } 
     
@@ -2312,7 +2458,7 @@ mutaterand1<-function(X,FF,i){
 
 
 
-BBFULLn <- function(X,Wk=NULL,PS=TRUE,use_cpp=TRUE)  {
+BBFULLn <- function(X,Wk=NULL,PS=TRUE,use_cpp=TRUE, cij=NULL, nj=NULL)  {
   #Branch and Bound algorithm to find median ranking in the space of full rankings
   #X is a data matrix in which the rows are the judges and the columns indicates the objects
   #Wk is the vector of weigths
@@ -2323,23 +2469,38 @@ BBFULLn <- function(X,Wk=NULL,PS=TRUE,use_cpp=TRUE)  {
   
   
   
-  M <- nrow(X)
-  N<-ncol(X)
+  # the combined input matrix can be given instead of the data (cij, with nj
+  # the number of judges)
+  cijgiven <- !is.null(cij)
+  if (cijgiven) {
+    M <- nj
+    NJ <- nj
+    N <- ncol(cij)
+    X <- matrix(0, 0, N, dimnames = list(NULL, colnames(cij)))
+  } else {
+    M <- nrow(X)
+    N<-ncol(X)
+  }
   tic <- proc.time()[3]
-  if (M==1) {
+  if (M==1 && !cijgiven) {
     consensus <- X
     TauX <- 1
   } else {
-    if (!is.null(Wk)) {
+    if (!cijgiven) {
+      if (!is.null(Wk)) {
       
-      if (is(Wk,"numeric")) {
-        Wk<-matrix(Wk,ncol=1)
+        if (is(Wk,"numeric")) {
+          Wk<-matrix(Wk,ncol=1)
+        }
+      
+        cij <- combinpmatr(X,Wk, use_cpp=use_cpp)
+      } else {
+        cij <- combinpmatr(X,use_cpp=use_cpp)
       }
-      
-      cij <- combinpmatr(X,Wk, use_cpp=use_cpp)
-    } else {
-      cij <- combinpmatr(X,use_cpp=use_cpp)
     }
+    
+    # elements of cij equal to zero up to rounding errors
+    cij <- cleancij(cij)
     
     if (sum(cij==0)==nrow(cij)^2){
       

@@ -9,6 +9,8 @@
 #' @param w A M-dimensional row vector (individually weighted items), or a M by M matrix (item similarities)
 #' @return If there is only x as input, d = square distance matrix. If there is also y as input, d = matrix with N rows and n columns.
 #'
+#' @details The Kemeny distance is defined for complete rankings (with or without ties): if x or y contain missing values (NA) the function stops with an error. Partial rankings must be completed by the user before computing the distance, e.g. by tying the missing objects in the last position.
+#'
 #' @references Kemeny, J. G., & Snell, L. J. (1962). Preference ranking: an axiomatic approach. Mathematical models in the social sciences, 9-23. \cr
 #' Albano, A. and Plaia, A. (2021)  Element weighted Kemeny distance for  ranking data. Electronic  Journal  of  Applied Statistical Analysis, doi: 10.1285/i20705948v14n1p117
 #'
@@ -48,6 +50,11 @@
 #' @export
 
 iw_kemenyd <- function(x,y=NULL,w){
+
+  # the Kemeny distance is not defined for partial rankings
+  if (anyNA(x) || (!is.null(y) && anyNA(y))) {
+    stop("the rankings contain missing values (NA): the Kemeny distance is not defined for partial rankings. Complete the rankings first, e.g. by tying the missing objects in the last position")
+  }
 
   if(is(y,"NULL")){
 
@@ -179,13 +186,13 @@ iw_tau_x <- function(x,y=NULL,w){
 
     if(!is.null(dim(w))){
 
-      x <- t(apply(x,1,rank,ties.method ="min"))
+      x <- t(apply(x,1,rank,ties.method ="min",na.last="keep"))
       ws_k <- w
     }
 
     else{
       x <- x[,which(w!=0)]
-      x <- t(apply(x,1,rank,ties.method ="min"))
+      x <- t(apply(x,1,rank,ties.method ="min",na.last="keep"))
       w <- w[which(w!=0)]
      #original ws_k <- matrix(,length(w),length(w))
       ws_k <- matrix(NA,length(w),length(w))
@@ -220,17 +227,17 @@ iw_tau_x <- function(x,y=NULL,w){
 
     if(!is.null(dim(w))){
 
-      x <- t(apply(x,1,rank,ties.method ="min"))
-      y <- t(apply(y,1,rank,ties.method ="min"))
+      x <- t(apply(x,1,rank,ties.method ="min",na.last="keep"))
+      y <- t(apply(y,1,rank,ties.method ="min",na.last="keep"))
 
       ws_k <- w }
 
     else{
       x <- x[,which(w!=0),drop=FALSE]
-      x <- t(apply(x,1,rank,ties.method ="min"))
+      x <- t(apply(x,1,rank,ties.method ="min",na.last="keep"))
 
       y <- y[,which(w!=0),drop=FALSE]
-      y <- t(apply(y,1,rank,ties.method ="min"))
+      y <- t(apply(y,1,rank,ties.method ="min",na.last="keep"))
 
       w <- w[which(w!=0)]
       # original ws_k <- matrix(,length(w),length(w))

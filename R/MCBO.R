@@ -4,7 +4,7 @@
 #' to Kemeny's axiomatic approach. This implements the algorithms described in 
 #' D'Ambrosio et al. (2019) for rank aggregation with fixed bucket constraints.
 #'
-#' @param X A N by M data matrix, in which there are N judges and M objects to be judged. 
+#' @param X A N by M data matrix, in which there are N judges and M objects to be judged. Either X or cij must be given. 
 #'   Each row is a ranking of the objects which are represented by the columns. 
 #'   If X contains the rankings observed only once, the argument wk can be used
 #' @param nbuckets Integer. The number of buckets (tied groups) the consensus ranking 
@@ -14,11 +14,14 @@
 #' @param algorithm Character string specifying the algorithm to use. One of:
 #'   \itemize{
 #'     \item "BB" - Branch-and-Bound (exact, default). Best for M <= 15
-#'     \item "quick" - Quick algorithm (heuristic). Best for 15 < M <= 50
+#'     \item "quick" - Quick algorithm (deterministic heuristic, see Details). Best for 15 < M <= 50
 #'     \item "decor" - Differential Evolution (metaheuristic). Best for M > 50
+#'     \item "BOLT" - BOLT adapted to the bucket constraint (deterministic heuristic,
+#'       see Details). Works with a very large number of objects
 #'   }
-#' @param itermax Integer. Maximum number of iterations for "quick" and "decor" algorithms. 
-#'   Default 10
+#' @param itermax Integer. For "quick": maximum number of insertion passes (the
+#'   algorithm stops earlier when a pass does not improve the solution). For "decor":
+#'   number of runs of the algorithm. Default 10
 #' @param np Integer. Number of population individuals for "decor" algorithm. Default 10
 #' @param gl Integer. Generations limit for "decor": maximum number of consecutive 
 #'   generations without improvement. Default 100
@@ -26,6 +29,15 @@
 #' @param cr Numeric. Crossover range for "decor". Must be in [0,1]. Default 0.8
 #' @param use_cpp Logical. If TRUE (default), use optimized C++ implementations 
 #'   for core functions (combinpmatr, scorematrix, PenaltyBB2, etc.)
+#' @param maxjudges For "BOLT" only: maximum number of distinct rankings of the
+#'   judges used as starting solutions, the most frequent first. Default Inf (all
+#'   of them); 0 uses only the starting solutions computed from the combined input
+#'   matrix
+#' @param cij The combined input matrix (M by M, see \code{\link{combinpmatr}}), to be
+#'   given instead of X. With cij, the argument wk is ignored and the rankings of the
+#'   judges are not used as starting solutions by "BOLT"
+#' @param nj The number of judges (the sum of the weights, if any) that produced cij.
+#'   Required when cij is given: it is used to compute the averaged TauX
 #'
 #' @return A list containing the following components:
 #' \tabular{lll}{
@@ -58,10 +70,42 @@
 #'   \item \strong{decor}: Best for large problems. Use for M > 50 items
 #' }
 #' 
-#' For stochastic algorithms (quick, decor), consider running multiple times 
-#' (controlled by \code{itermax}) to avoid local optima.
+#' The "decor" algorithm is stochastic: it is run several times (controlled by
+#' \code{itermax}) to avoid local optima. Since version 3.1, a good candidate (the
+#' order of the starting point of the branch-and-bound algorithm, cut into exactly
+#' \code{nbuckets} buckets by the optimal partition described below for "BOLT") is
+#' inserted in the initial population, a child with a wrong number of buckets is
+#' brought back to \code{nbuckets} buckets by the optimal partition of its order
+#' (instead of being replaced by a random individual), and the final solution is
+#' refined by the optimal partition of its order.
+#'
+#' The "quick" algorithm is deterministic (since version 3.1). The starting
+#' solution is the order given by the starting point of the branch-and-bound
+#' algorithm, cut into exactly \code{nbuckets} buckets by the optimal partition
+#' described below for "BOLT". Then the insertion passes of the Quick algorithm
+#' are repeated until no improvement: a candidate solution with a number of
+#' buckets different from \code{nbuckets} is brought back to \code{nbuckets}
+#' buckets by the optimal partition of its order, and each solution is refined in
+#' the same way.
+#'
+#' The "BOLT" algorithm adapts the procedure of \code{\link{bolt}} to the
+#' bucket constraint. For a fixed order of the objects, the best partition into
+#' exactly \code{nbuckets} groups of consecutive objects is computed exactly by
+#' dynamic programming in O(nbuckets M^2) time. From each starting solution (the
+#' same as in \code{\link{bolt}}), the order is first improved by an insertion
+#' local search without ties; then the optimal partition into \code{nbuckets}
+#' buckets and a local search that keeps the number of buckets (an object alone
+#' in its bucket is moved to another position, an object of a larger bucket is
+#' moved into another bucket) are alternated until no improvement. The procedure
+#' is deterministic: repeated runs return the same solution(s), and the argument
+#' \code{itermax} is not used.
 #'
 #' @examples
+#' # Deterministic BOLT algorithm
+#' data(EMD)
+#' CR_bolt <- mcbo(EMD[,1:15], nbuckets = 5, wk = EMD[,16], algorithm = "BOLT")
+#' CR_bolt$Tau
+#' 
 #' \dontrun{
 #' # Simple example with 98 judges ranking 5 items into 3 buckets
 #' data(Idea)
@@ -81,11 +125,16 @@
 #' Median constrained bucket order rank aggregation. 
 #' Computational Statistics, 34(2), 787-802. 
 #' \doi{10.1007/s00180-018-0858-z}
+#'
+#' Romano, M., D'Ambrosio, A., and Conversano, C. A deterministic and scalable
+#' heuristic for median ranking detection: tie-aware local search with optimal
+#' tie partitioning on the combined input matrix. Manuscript under review.
 #' 
 #'
 #' @author Antonio D'Ambrosio \email{antdambr@unina.it}
 #'
 #' @seealso \code{\link{consrank}} for unconstrained consensus ranking
+#' @seealso \code{\link{bolt}} for the BOLT algorithm
 #' @seealso \code{\link{combinpmatr}} for computing the combined input matrix
 #' @seealso \code{\link{scorematrix}} for computing score matrices
 #' @seealso \code{\link{tau_x}} for TauX correlation coefficient
@@ -101,27 +150,39 @@
 #'
 #' @export
 
-mcbo <- function(X, nbuckets, wk = NULL, ps = TRUE, 
+mcbo <- function(X = NULL, nbuckets, wk = NULL, ps = TRUE, 
                  algorithm = "BB", itermax = 10,
                  np = 10, gl = 100, ff = 0.4, cr = 0.8,
-                 use_cpp = TRUE) {
+                 use_cpp = TRUE, maxjudges = Inf, cij = NULL, nj = NULL) {
   
   # ══════════════════════════════════════════════════════════════════════════
   # 1. INPUT VALIDATION
   # ══════════════════════════════════════════════════════════════════════════
   
-  if (is(X, "data.frame")) X <- as.matrix(X)
-  if (is.null(nrow(X))) X <- matrix(X, nrow = 1)
+  # either the data X or the combined input matrix cij (with nj)
+  cij <- checkXcij(X, cij, nj, wk)
+  cijgiven <- !is.null(cij)
   
-  M <- nrow(X)
-  N <- ncol(X)
+  if (cijgiven) {
+    wk <- NULL
+    M <- nj
+    N <- ncol(cij)
+    X <- matrix(0, 0, N, dimnames = list(NULL, colnames(cij)))
+  } else {
+    if (is(X, "data.frame")) X <- as.matrix(X)
+    if (is.null(nrow(X))) X <- matrix(X, nrow = 1)
+    
+    M <- nrow(X)
+    N <- ncol(X)
+    
+    if (M < 2) stop("Data matrix must contain at least two different rankings")
+  }
   
   # Validation checks
-  if (M < 2) stop("Data matrix must contain at least two different rankings")
   if (nbuckets < 2) stop("nbuckets must be at least 2")
   if (nbuckets >= N) stop(paste0("nbuckets must be less than N (", N, ")"))
   
-  valid_algorithms <- c("BB", "quick", "decor")
+  valid_algorithms <- c("BB", "quick", "decor", "BOLT")
   if (!algorithm %in% valid_algorithms) {
     stop(paste0("algorithm must be one of: ", paste(valid_algorithms, collapse = ", ")))
   }
@@ -139,8 +200,13 @@ mcbo <- function(X, nbuckets, wk = NULL, ps = TRUE,
   
   tic <- proc.time()[3]
   
-  cij <- combinpmatr(X, Wk = wk, use_cpp = use_cpp)
-  nj <- if (is.null(wk)) M else sum(wk)
+  if (!cijgiven) {
+    cij <- combinpmatr(X, Wk = wk, use_cpp = use_cpp)
+    nj <- if (is.null(wk)) M else sum(wk)
+  }
+  
+  # elements of cij equal to zero up to rounding errors
+  cij <- cleancij(cij)
   
   # Trivial case: all zeros
   if (sum(cij == 0) == length(cij)) {
@@ -164,6 +230,12 @@ mcbo <- function(X, nbuckets, wk = NULL, ps = TRUE,
                          maxiter = itermax,
                          PS = ps,
                          use_cpp = use_cpp)
+    
+  } else if (algorithm == "BOLT") {
+    out <- boltcijbuckets(cij, nbuckets, nj,
+                          seeds = if (cijgiven) NULL else boltjudges(X, wk, maxjudges),
+                          ps = ps)
+    colnames(out$Consensus) <- colnames(X)
     
   } else if (algorithm == "decor") {
     out <- DECoR_buckets(
@@ -365,12 +437,12 @@ BBconsensus3 <- function(RR, cij, Po, PS, buckets, use_cpp) {
       }
     }
     
-    SSP <- matrix(which(BR.P == min(BR.P)))
+    SSP <- matrix(which(BR.P <= min(BR.P) + bbtol(cij)))
     MinP <- min(BR.P)
     PenMin <- Po - MinP
     
     # Check convergence
-    if (PenMin == 0) {
+    if (PenMin <= bbtol(cij)) {
       # Found optimal solution
       CR <- matrix(BR.R[SSP, ], length(SSP), N)
       WCi <- 0
@@ -425,7 +497,7 @@ branchesbuckets <- function(brR, cij, b, Po, ord, Pb, buckets, use_cpp) {
   
   # Filter by penalty
   Pbr <- addpenalty + Pb
-  idp <- which(Pbr <= Po)
+  idp <- which(Pbr <= Po + bbtol(cij))
   
   if (length(idp) == 0) {
     return(list(cR = NULL, pcR = NULL))
@@ -536,7 +608,7 @@ BBconsensusBuckts <- function(RR, cij, PS, buckets, use_cpp) {
         Pb[aa] <- 1e10
       }
       
-      if (Pb[aa] == 0) {
+      if (abs(Pb[aa]) <= bbtol(cij)) {
         CR <- R
         Po <- 0
         Pc <- 0
@@ -556,9 +628,9 @@ BBconsensusBuckts <- function(RR, cij, PS, buckets, use_cpp) {
     if (Pc == 0) break
     
     minp <- min(Pb)
-    posp <- which(Pb == min(Pb))
+    posp <- which(Pb <= min(Pb) + bbtol(cij))
     
-    if (minp <= Po) {
+    if (minp <= Po + bbtol(cij)) {
       Po <- minp
       CR <- t(matrix(candidate[posp[1], ]))
       R <- CR
@@ -628,213 +700,71 @@ N2R <- function(N, buckets, cij, M, repts, use_cpp = TRUE) {
 # Quick algorithm for Median Constrained Bucket Order
 # ══════════════════════════════════════════════════════════════════════════
 
+# Deterministic version (ConsRank 3.1). The starting solution is the order of
+# the starting point of the branch-and-bound algorithm, cut into exactly
+# nbuckets buckets by the optimal partition (bolt_otpb_impl). Then the
+# insertion passes of the Quick algorithm are repeated until no improvement
+# (at most maxiter passes); a candidate with a number of buckets different
+# from nbuckets is brought back to nbuckets buckets by the optimal partition of
+# its order, instead of being discarded. Each solution is finally refined by
+# the optimal partition of its order.
+
 Quick_buckets <- function(cij, nbuckets, nj, Wk = NULL, maxiter = 10, PS = TRUE, use_cpp = TRUE) {
-  
+
   N <- ncol(cij)
-  isw <- is.null(Wk)
-  
+  nw <- if (is.null(Wk)) nj else sum(Wk)
+  tol <- 1e-10 * max(1, sum(abs(cij)))
+
+  # deterministic starting solution with exactly nbuckets buckets
+  R <- matrix(bolt_otpb_impl(as.numeric(findconsensusBB(cij)), cij, nbuckets, tol), 1, N)
+  val <- bolt_obj_impl(t(R), cij)
+
   if (PS) {
-    message("Quick algorithm: generating ", maxiter, " candidate solutions...")
+    message("Quick algorithm: at most ", maxiter, " passes")
   }
-  
-  # ══════════════════════════════════════════════════════════════════════════
-  # STEP 1: Generate multiple random starting points
-  # ══════════════════════════════════════════════════════════════════════════
-  
-  all_solutions <- vector("list", maxiter)
-  all_taus <- numeric(maxiter)
-  
-  for (iter in 1:maxiter) {
-    
+
+  for (iter in seq_len(maxiter)) {
+
+    cand <- BBconsensusBuckts_phase1(RR = R, cij = cij, nbuckets = nbuckets,
+                                     PS = FALSE, use_cpp = use_cpp)$cons
+    if (!is.matrix(cand)) cand <- matrix(cand, 1, N)
+
+    # refinement: optimal partition of the order into nbuckets buckets
+    cand <- matrix(bolt_otpb_impl(as.numeric(cand[1, ]), cij, nbuckets, tol), 1, N)
+    v <- bolt_obj_impl(t(cand), cij)
+
     if (PS) {
-      message("  Iteration ", iter, "/", maxiter)
+      message("  Pass ", iter, ": Tau = ", round(v / (nw * N * (N - 1)), 4))
     }
-    
-    # Generate random initial candidate with nbuckets
-    R_init <- findconsensusBB_buckets(cij, nbuckets)
-    
-    # Optionally perturb the initial solution for diversity
-    if (iter > 1) {
-      # Add small random perturbation
-      perm_idx <- sample(N, size = min(3, N))
-      for (idx in perm_idx) {
-        # Random bucket assignment (within 1:nbuckets)
-        R_init[1, idx] <- sample(1:nbuckets, 1)
-      }
-    }
-    
-    # Calculate initial penalty
-    Sij_init <- scorematrix(R_init, use_cpp = use_cpp)
-    Po_init <- sum(abs(cij)) - sum(cij * Sij_init)
-    
-    # Refine with lightweight BB (1 pass only)
-    bb_result <- BBconsensusBuckts_phase1(
-      RR = R_init,
-      cij = cij,
-      nbuckets = nbuckets,
-      PS = FALSE,
-      use_cpp = use_cpp
-    )
-    
-    consensus <- bb_result$cons
-    
-    # Ensure it's a matrix
-    if (!is.matrix(consensus)) {
-      consensus <- matrix(consensus, 1, N)
-    }
-    
-    # Calculate TauX for this solution
-    Sij <- scorematrix(consensus, use_cpp = use_cpp)
-    
-    if (!isw) {
-      tau <- sum(cij * Sij) / (sum(Wk) * (N * (N - 1)))
+
+    if (v > val + tol) {
+      R <- cand
+      val <- v
     } else {
-      tau <- sum(cij * Sij) / (nj * (N * (N - 1)))
-    }
-    
-    all_solutions[[iter]] <- consensus
-    all_taus[iter] <- tau
-    
-    if (PS) {
-      message("    Tau: ", round(all_taus[iter], 4))
+      break
     }
   }
-  
-  # ══════════════════════════════════════════════════════════════════════════
-  # STEP 2: Combine and select best unique solutions
-  # ══════════════════════════════════════════════════════════════════════════
-  
-  # Combine all solutions
-  all_consensus <- do.call(rbind, all_solutions)
-  
-  # Remove duplicates
-  unique_idx <- !duplicated(all_consensus)
-  unique_consensus <- all_consensus[unique_idx, , drop = FALSE]
-  unique_taus <- all_taus[unique_idx]
-  
-  # Keep only the best solutions
-  best_tau <- max(unique_taus)
-  best_idx <- which(unique_taus == best_tau)
-  
-  final_consensus <- unique_consensus[best_idx, , drop = FALSE]
-  final_tau <- unique_taus[best_idx]
-  
+
+  tau <- val / (nw * N * (N - 1))
+
   if (PS) {
-    message("Quick completed: ", length(best_idx), " solution(s) with Tau = ", 
-            round(best_tau, 4))
+    message("Quick completed: Tau = ", round(tau, 4))
   }
-  
-  # Apply reordering before returning
-  final_consensus <- reordering(final_consensus)
-  
-  return(list(Consensus = final_consensus, Tau = final_tau))
+
+  return(list(Consensus = reordering(R), Tau = tau))
 }
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# HELPER FUNCTION: Quick initialization for BB
-# ══════════════════════════════════════════════════════════════════════════
-
-findconsensusBB_buckets <- function(cij, nbuckets) {
-  
-  N <- ncol(cij)
-  
-  # Edge case: nbuckets = N-1 (almost full ranking)
-  # Just assign each item its own bucket except tie the two weakest
-  if (nbuckets >= N - 1) {
-    strength <- colSums(cij)
-    ranking <- rank(-strength, ties.method = "first")
-    
-    # Find two items with closest strength to tie together
-    strength_sorted <- sort(strength)
-    min_diff_idx <- which.min(diff(strength_sorted))
-    tie_value <- strength_sorted[min_diff_idx]
-    
-    # Assign buckets: most items get unique bucket, two weakest share one
-    bucket <- ranking
-    tie_items <- which(strength <= strength_sorted[min_diff_idx + 1])
-    if (length(tie_items) >= 2) {
-      bucket[tie_items[1:2]] <- max(bucket)
-    }
-    
-    # Renumber to 1:nbuckets
-    bucket_map <- rank(unique(sort(bucket)))
-    final_ranking <- bucket_map[match(bucket, unique(sort(bucket)))]
-    
-    return(matrix(final_ranking, 1, N))
-  }
-  
-  # Normal case: nbuckets << N
-  strength <- colSums(cij)
-  
-  # Use more robust method: assign items to buckets by strength percentiles
-  # This avoids issues with identical quantile values
-  strength_ranks <- rank(strength, ties.method = "first")
-  
-  # Assign to buckets based on rank
-  items_per_bucket <- N / nbuckets
-  bucket <- ceiling(strength_ranks / items_per_bucket)
-  
-  # Ensure exactly nbuckets
-  bucket <- pmin(bucket, nbuckets)
-  
-  # Fix if we have too few buckets (due to ties)
-  actual_buckets <- length(unique(bucket))
-  
-  if (actual_buckets < nbuckets) {
-    # Split largest buckets
-    while (length(unique(bucket)) < nbuckets) {
-      bucket_sizes <- table(bucket)
-      largest_bucket <- as.numeric(names(which.max(bucket_sizes)))
-      items_in_largest <- which(bucket == largest_bucket)
-      
-      if (length(items_in_largest) < 2) break  # Can't split further
-      
-      # Split in half
-      mid <- length(items_in_largest) %/% 2
-      new_bucket_id <- max(bucket) + 1
-      bucket[items_in_largest[(mid+1):length(items_in_largest)]] <- new_bucket_id
-    }
-  } else if (actual_buckets > nbuckets) {
-    # Merge smallest buckets
-    while (length(unique(bucket)) > nbuckets) {
-      bucket_sizes <- table(bucket)
-      smallest_bucket <- as.numeric(names(which.min(bucket_sizes)))
-      
-      # Merge with adjacent bucket (by strength)
-      bucket_means <- tapply(strength, bucket, mean)
-      other_buckets <- setdiff(unique(bucket), smallest_bucket)
-      
-      if (length(other_buckets) == 0) break
-      
-      distances <- abs(bucket_means[as.character(other_buckets)] - 
-                         bucket_means[as.character(smallest_bucket)])
-      adjacent <- other_buckets[which.min(distances)]
-      
-      bucket[bucket == smallest_bucket] <- adjacent
-    }
-  }
-  
-  # Renumber buckets 1:nbuckets by mean strength
-  bucket_means <- tapply(strength, bucket, mean)
-  bucket_order <- rank(bucket_means)
-  
-  final_ranking <- bucket_order[bucket]
-  
-  return(matrix(final_ranking, 1, N))
-}
-
-
-# ══════════════════════════════════════════════════════════════════════════
-# BBconsensusBuckts_phase1: Lightweight BB for Quick (1 pass only)
+# BBconsensusBuckts_phase1: one insertion pass of the Quick algorithm
 # ══════════════════════════════════════════════════════════════════════════
 
 BBconsensusBuckts_phase1 <- function(RR, cij, nbuckets, PS = FALSE, use_cpp = TRUE) {
-  
+
   if (is.null(ncol(RR))) {
     RR <- matrix(RR, nrow = 1)
   }
-  
+
   CR <- RR
   N <- ncol(RR)
   sij <- scorematrix(RR, use_cpp = use_cpp)
@@ -843,13 +773,13 @@ BBconsensusBuckts_phase1 <- function(RR, cij, nbuckets, PS = FALSE, use_cpp = TR
   ord <- t(matrix(order(RR, decreasing = TRUE)))
   R <- RR
   addpenalty <- matrix(0, length(a), 1)
-  
+
   # Single pass exploration
   for (k in 2:length(a)) {
-    
+
     b <- 1:k
     R <- ReorderingBB(R, use_cpp = use_cpp)
-    
+
     # OPTIMIZED: Direct assignment
     KR <- R[ord[b]]
     KR <- KR[-length(KR)]
@@ -859,57 +789,59 @@ BBconsensusBuckts_phase1 <- function(RR, cij, nbuckets, PS = FALSE, use_cpp = TR
     KO <- 1
     KR[length(KR) + 1] <- mo + 1
     R[ord[b]] <- KR
-    
+
     candidate <- matrix(0, nrow(RR), ncol(RR))
     Pb <- matrix(0, 1, 1)
     Pc <- 1
-    
+
     while (KO == 1) {
-      
+
       candidate <- rbind(candidate, R)
-      
+
       if (aa == 1) {
         candidate <- matrix(candidate[-1, ], 1, ncol(candidate))
       }
-      
+
+      # A candidate with a wrong number of buckets is brought back to
+      # nbuckets buckets by the optimal partition of its order
+      if (length(unique(candidate[aa, ])) != nbuckets) {
+        candidate[aa, ] <- bolt_otpb_impl(as.numeric(candidate[aa, ]), cij, nbuckets,
+                                           1e-10 * max(1, sum(abs(cij))))
+      }
+
       Sij <- scorematrix(matrix(candidate[aa, ], 1, N), use_cpp = use_cpp)
       Pb <- rbind(Pb, sum(abs(cij)) - sum(cij * Sij))
-      
+
       if (aa == 1) {
         Pb <- matrix(Pb[-1, ], 1, 1)
       }
-      
-      # Penalize wrong bucket count
-      if (length(table(candidate[aa, ])) != nbuckets) {
-        Pb[aa] <- 1e10
-      }
-      
+
       # Check if optimal found
-      if (Pb[aa] == 0) {
-        CR <- R
+      if (abs(Pb[aa]) <= bbtol(cij)) {
+        CR <- matrix(candidate[aa, ], 1, N)
         Po <- 0
         Pc <- 0
         break
       }
-      
+
       R[ord[b[length(b)]]] <- R[ord[b[length(b)]]] - 1
-      
+
       if (mi - R[ord[b[length(b)]]] > 1) {
         KO <- 0
       }
-      
+
       aa <- aa + 1
     }
-    
+
     if (Pc == 0) {
       break
     }
-    
+
     # Update with best found
     minp <- min(Pb)
-    posp <- which(Pb == min(Pb))
-    
-    if (minp <= Po) {
+    posp <- which(Pb <= min(Pb) + bbtol(cij))
+
+    if (minp <= Po + bbtol(cij)) {
       Po <- minp
       CR <- t(matrix(candidate[posp[1], ]))
       R <- CR
@@ -918,17 +850,17 @@ BBconsensusBuckts_phase1 <- function(RR, cij, nbuckets, PS = FALSE, use_cpp = TR
       R <- CR
       addpenalty[k, 1] <- PenaltyBB2(cij, R, ord[b], use_cpp = use_cpp)
     }
-    
+
     candidate <- matrix(0, nrow(R), N)
     Pb <- matrix(0, 1, 1)
   }
-  
+
   if (Pc == 0) {
     Po <- 0
   } else {
     Po <- sum(addpenalty)
   }
-  
+
   return(list(cons = CR, pen = Po))
 }
 
@@ -997,6 +929,17 @@ DECoR_buckets <- function(cij, nbuckets, nj, Wk = NULL,
     oversol <- matrix(oversol, nrow = 1)
   }
   
+  # refinement: optimal partition of the order of the best solution into
+  # nbuckets buckets (never worse than the solution itself)
+  tol <- 1e-10 * max(1, sum(abs(cij)))
+  ref <- matrix(bolt_otpb_impl(as.numeric(oversol[1, ]), cij, nbuckets, tol), 1, N)
+  nw <- if (is.null(Wk)) nj else sum(Wk)
+  tauref <- bolt_obj_impl(t(ref), cij) / (nw * N * (N - 1))
+  if (tauref > TauX + 1e-12) {
+    oversol <- ref
+    TauX <- tauref
+  }
+  
   toc <- proc.time()[3]
   eltime <- toc - tic
   
@@ -1035,6 +978,12 @@ decorbuckets <- function(NP, L, FF, CR, cij, NJ, buckets, use_cpp = TRUE) {
   }
   
   population <- t(replicate(NP, genpop(N, buckets)))
+  
+  # insert a good candidate (as in the DECoR algorithm of consrank): the order
+  # of the starting point of the branch-and-bound algorithm, cut into exactly
+  # 'buckets' buckets by the optimal partition
+  tol <- 1e-10 * max(1, sum(abs(cij)))
+  population[NP, ] <- bolt_otpb_impl(as.numeric(findconsensusBB(cij)), cij, buckets, tol)
   
   # ════════════════════════════════════════════════════════════════════════
   # STEP 2: Evaluate initial population
@@ -1077,8 +1026,10 @@ decorbuckets <- function(NP, L, FF, CR, cij, NJ, buckets, use_cpp = TRUE) {
       
       # CRITICAL VALIDATION: Ensure exactly 'buckets' unique values
       if (length(unique(evolution)) != buckets) {
-        # Repair failed - regenerate valid solution
-        evolution <- genpop(N, buckets)
+        # Repair failed: the child is brought back to 'buckets' buckets by the
+        # optimal partition of its order (before: it was replaced by a new
+        # random individual)
+        evolution <- bolt_otpb_impl(as.numeric(evolution), cij, buckets, tol)
       }
       
       # EVALUATE

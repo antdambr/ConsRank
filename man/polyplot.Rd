@@ -2,46 +2,71 @@
 % Please edit documentation in R/polyplot.R
 \name{polyplot}
 \alias{polyplot}
-\title{Plot rankings on a permutation polytope of 3 o 4 objects containing all possible ties}
+\title{Plot rankings on a permutation polytope of 3 or 4 objects containing all possible ties}
 \usage{
-polyplot(X = NULL, L = NULL, Wk = NULL, nobj = 3)
+polyplot(X = NULL, L = NULL, Wk = NULL, nobj = 3, engine = "auto", size = 1)
 }
 \arguments{
-\item{X}{the sample of rankings. Most of the time it is returned by tabulaterows}
+\item{X}{Sample of rankings (matrix or data frame with 3 or 4 columns), either one row for
+each judge or the distinct rankings returned by tabulaterows() with their frequencies in Wk.
+If NULL (default), the whole universe of rankings of \code{nobj} objects is plotted}
 
-\item{L}{labels of the objects}
+\item{L}{Labels of the objects (character vector)}
 
-\item{Wk}{frequency associated to each ranking}
+\item{Wk}{Frequency weights for each ranking (numeric vector). If NULL, each row of X counts 1}
 
-\item{nobj}{number of objects. It must be either 3 or 4}
+\item{nobj}{Number of objects, 3 (default) or 4. Used only when X is NULL: if X is given,
+the number of objects is the number of columns of X}
+
+\item{engine}{Rendering engine for 4-object plots: "auto", "rgl", or "plotly" (character)}
+
+\item{size}{Scale factor of the symbols (default 1): values larger than 1 enlarge them}
 }
 \value{
-the permutation polytope
+For 3 objects: invisible NULL (creates base graphics plot)
+        For 4 objects: invisible NULL for rgl, plotly object for plotly engine
 }
 \description{
-Plot rankings a permutation polytope that is the geometrical space of preference rankings. The plot is available for 3 or for 4 objects
+Plot rankings on the permutation polytope, the geometrical space of preference rankings
+with all the possible ties. The plot is available for 3 or 4 objects.
 }
 \details{
-polyplot() plots the universe of 3 objects. polyplot(nobj=4) plots the universe of 4 objects.
-Note: 4-object plots require the 'rgl' package to be installed.
+For 3 objects: uses base R graphics (always available)
+For 4 objects:
+  - engine="auto": tries rgl first, falls back to plotly if unavailable
+  - engine="rgl": requires 'rgl' package (may need XQuartz on macOS)
+  - engine="plotly": requires 'plotly' package (works on all platforms)
+
+A polytope with more than 4 objects cannot be visualized: in that case the function stops
+with an error.
+
+Each observed ranking is drawn as a circle (3 objects) or a sphere (4 objects) whose area is
+proportional to its frequency, i.e. the sum of the weights Wk of the rows of X equal to it (rows
+with ties are matched whatever the coding of the ties, e.g. (1, 3, 3) and (1, 2, 2)); the most
+frequent ranking has the largest symbol, whose size is controlled by \code{size}. If X is NULL,
+all the points of the polytope are shown. With the plotly engine the frequency is shown when the
+mouse is over a point.
 }
 \examples{
-\dontrun{
 polyplot()
-}
-
-\dontrun{
-# Requires rgl package
-polyplot(nobj=4)
 data(BU)
-polyplot(BU[,1:3],Wk=BU[,4])
+polyplot(BU[, 1:3], Wk = BU[, 4])
+\donttest{
+data(German)
+tab <- tabulaterows(German)
+if (requireNamespace("rgl", quietly = TRUE)) {
+  polyplot(tab$X, Wk = tab$Wk, engine = "rgl")
+}
 }
 
 }
 \references{
-Thompson, G. L. (1993). Generalized permutation polytopes and exploratory graphical methods for ranked data. The Annals of Statistics, 1401-1430.
-#
-Heiser, W. J., and D'Ambrosio, A. (2013). Clustering and prediction of rankings within a Kemeny distance framework. In Algorithms from and for Nature and Life (pp. 19-31). Springer International Publishing.
+Thompson, G. L. (1993). Generalized permutation polytopes and exploratory
+graphical methods for ranked data. The Annals of Statistics, 1401-1430.
+
+Heiser, W. J., and D'Ambrosio, A. (2013). Clustering and prediction of
+rankings within a Kemeny distance framework. In Algorithms from and for
+Nature and Life (pp. 19-31). Springer International Publishing.
 }
 \seealso{
 \code{\link{tabulaterows}} frequency distribution for ranking data.

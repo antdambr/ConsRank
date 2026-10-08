@@ -7,6 +7,8 @@
 #'
 #' @return If there is only X as input, d = square distance matrix. If there is also Y as input, d = matrix with N rows and n columns.
 #'
+#' @details The Kemeny distance is defined for complete rankings (with or without ties): if X or Y contain missing values (NA) the function stops with an error. Partial rankings must be completed by the user before computing the distance, e.g. by tying the missing objects in the last position (the ranking (1, 2, NA, NA) becomes (1, 2, 3, 3)).
+#'
 #' @references Kemeny, J. G., & Snell, L. J. (1962). Preference ranking: an axiomatic approach. Mathematical models in the social sciences, 9-23.
 #' 
 #' @author Antonio D'Ambrosio \email{antdambr@unina.it}
@@ -31,6 +33,11 @@
 kemenyd <- function(X,Y=NULL) {
   
   ##Kemeny Distance
+  
+  # the Kemeny distance is not defined for partial rankings
+  if (anyNA(X) || (!is.null(Y) && anyNA(Y))) {
+    stop("the rankings contain missing values (NA): the Kemeny distance is not defined for partial rankings. Complete the rankings first, e.g. by tying the missing objects in the last position")
+  }
   
   if (is(X,"numeric") & !is(X,"matrix")) {
     X<-matrix(X,ncol=length(X))

@@ -17,6 +17,8 @@ Croon, M. A. (1989). Latent class models for the analysis of rankings. Advances 
 \examples{
 data(German)
 TR=tabulaterows(German)
-polyplot(TR$X,Wk=TR$Wk,nobj=4)
+if (requireNamespace("rgl", quietly = TRUE)) {
+  polyplot(TR$X, Wk = TR$Wk, engine = "rgl")
+}
 }
 \keyword{datasets}

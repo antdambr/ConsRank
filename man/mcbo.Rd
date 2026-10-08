@@ -5,7 +5,7 @@
 \title{Median Constrained Bucket Order (MCBO)}
 \usage{
 mcbo(
-  X,
+  X = NULL,
   nbuckets,
   wk = NULL,
   ps = TRUE,
@@ -15,11 +15,14 @@ mcbo(
   gl = 100,
   ff = 0.4,
   cr = 0.8,
-  use_cpp = TRUE
+  use_cpp = TRUE,
+  maxjudges = Inf,
+  cij = NULL,
+  nj = NULL
 )
 }
 \arguments{
-\item{X}{A N by M data matrix, in which there are N judges and M objects to be judged. 
+\item{X}{A N by M data matrix, in which there are N judges and M objects to be judged. Either X or cij must be given. 
 Each row is a ranking of the objects which are represented by the columns. 
 If X contains the rankings observed only once, the argument wk can be used}
 
@@ -33,12 +36,15 @@ must contain. Must be between 2 and M-1 (where M is the number of objects)}
 \item{algorithm}{Character string specifying the algorithm to use. One of:
 \itemize{
   \item "BB" - Branch-and-Bound (exact, default). Best for M <= 15
-  \item "quick" - Quick algorithm (heuristic). Best for 15 < M <= 50
+  \item "quick" - Quick algorithm (deterministic heuristic, see Details). Best for 15 < M <= 50
   \item "decor" - Differential Evolution (metaheuristic). Best for M > 50
+  \item "BOLT" - BOLT adapted to the bucket constraint (deterministic heuristic,
+    see Details). Works with a very large number of objects
 }}
 
-\item{itermax}{Integer. Maximum number of iterations for "quick" and "decor" algorithms. 
-Default 10}
+\item{itermax}{Integer. For "quick": maximum number of insertion passes (the
+algorithm stops earlier when a pass does not improve the solution). For "decor":
+number of runs of the algorithm. Default 10}
 
 \item{np}{Integer. Number of population individuals for "decor" algorithm. Default 10}
 
@@ -51,6 +57,18 @@ generations without improvement. Default 100}
 
 \item{use_cpp}{Logical. If TRUE (default), use optimized C++ implementations 
 for core functions (combinpmatr, scorematrix, PenaltyBB2, etc.)}
+
+\item{maxjudges}{For "BOLT" only: maximum number of distinct rankings of the
+judges used as starting solutions, the most frequent first. Default Inf (all
+of them); 0 uses only the starting solutions computed from the combined input
+matrix}
+
+\item{cij}{The combined input matrix (M by M, see \code{\link{combinpmatr}}), to be
+given instead of X. With cij, the argument wk is ignored and the rankings of the
+judges are not used as starting solutions by "BOLT"}
+
+\item{nj}{The number of judges (the sum of the weights, if any) that produced cij.
+Required when cij is given: it is used to compute the averaged TauX}
 }
 \value{
 A list containing the following components:
@@ -89,10 +107,42 @@ rankings, where S(n,b) is the Stirling number of the second kind.
   \item \strong{decor}: Best for large problems. Use for M > 50 items
 }
 
-For stochastic algorithms (quick, decor), consider running multiple times 
-(controlled by \code{itermax}) to avoid local optima.
+The "decor" algorithm is stochastic: it is run several times (controlled by
+\code{itermax}) to avoid local optima. Since version 3.1, a good candidate (the
+order of the starting point of the branch-and-bound algorithm, cut into exactly
+\code{nbuckets} buckets by the optimal partition described below for "BOLT") is
+inserted in the initial population, a child with a wrong number of buckets is
+brought back to \code{nbuckets} buckets by the optimal partition of its order
+(instead of being replaced by a random individual), and the final solution is
+refined by the optimal partition of its order.
+
+The "quick" algorithm is deterministic (since version 3.1). The starting
+solution is the order given by the starting point of the branch-and-bound
+algorithm, cut into exactly \code{nbuckets} buckets by the optimal partition
+described below for "BOLT". Then the insertion passes of the Quick algorithm
+are repeated until no improvement: a candidate solution with a number of
+buckets different from \code{nbuckets} is brought back to \code{nbuckets}
+buckets by the optimal partition of its order, and each solution is refined in
+the same way.
+
+The "BOLT" algorithm adapts the procedure of \code{\link{bolt}} to the
+bucket constraint. For a fixed order of the objects, the best partition into
+exactly \code{nbuckets} groups of consecutive objects is computed exactly by
+dynamic programming in O(nbuckets M^2) time. From each starting solution (the
+same as in \code{\link{bolt}}), the order is first improved by an insertion
+local search without ties; then the optimal partition into \code{nbuckets}
+buckets and a local search that keeps the number of buckets (an object alone
+in its bucket is moved to another position, an object of a larger bucket is
+moved into another bucket) are alternated until no improvement. The procedure
+is deterministic: repeated runs return the same solution(s), and the argument
+\code{itermax} is not used.
 }
 \examples{
+# Deterministic BOLT algorithm
+data(EMD)
+CR_bolt <- mcbo(EMD[,1:15], nbuckets = 5, wk = EMD[,16], algorithm = "BOLT")
+CR_bolt$Tau
+
 \dontrun{
 # Simple example with 98 judges ranking 5 items into 3 buckets
 data(Idea)
@@ -113,9 +163,15 @@ D'Ambrosio, A., Iorio, C., Staiano, M., and Siciliano, R. (2019).
 Median constrained bucket order rank aggregation. 
 Computational Statistics, 34(2), 787-802. 
 \doi{10.1007/s00180-018-0858-z}
+
+Romano, M., D'Ambrosio, A., and Conversano, C. A deterministic and scalable
+heuristic for median ranking detection: tie-aware local search with optimal
+tie partitioning on the combined input matrix. Manuscript under review.
 }
 \seealso{
 \code{\link{consrank}} for unconstrained consensus ranking
+
+\code{\link{bolt}} for the BOLT algorithm
 
 \code{\link{combinpmatr}} for computing the combined input matrix
 

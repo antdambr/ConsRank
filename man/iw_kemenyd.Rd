@@ -19,6 +19,9 @@ If there is only x as input, d = square distance matrix. If there is also y as i
 \description{
 Compute the item-weighted Kemeny distance of a data matrix containing preference rankings, or compute the kemeny distance between two (matrices containing) rankings.
 }
+\details{
+The Kemeny distance is defined for complete rankings (with or without ties): if x or y contain missing values (NA) the function stops with an error. Partial rankings must be completed by the user before computing the distance, e.g. by tying the missing objects in the last position.
+}
 \examples{
 #Individually weighted items
 data("German")

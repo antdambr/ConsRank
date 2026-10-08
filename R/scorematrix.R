@@ -40,7 +40,11 @@ scorematrix <- function (X, use_cpp=TRUE) {
   if (use_cpp) {
     # Chiama scorematrix_cpp() - C++ ottimizzato
     sm <- scorematrix_cpp(matrix(x, nrow = 1))
-    # Restore names...
+    # Restore names if present
+    if (!is.null(itemnames) && length(itemnames) == length(x)) {
+      rownames(sm) <- itemnames
+      colnames(sm) <- itemnames
+    }
     return(sm)
   }
   

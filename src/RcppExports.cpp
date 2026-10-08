@@ -10,6 +10,74 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// bolt_run_b_impl
+List bolt_run_b_impl(NumericMatrix seeds, NumericMatrix cij, int nb, double tol);
+RcppExport SEXP _ConsRank_bolt_run_b_impl(SEXP seedsSEXP, SEXP cijSEXP, SEXP nbSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type seeds(seedsSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type cij(cijSEXP);
+    Rcpp::traits::input_parameter< int >::type nb(nbSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(bolt_run_b_impl(seeds, cij, nb, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
+// bolt_otpb_impl
+NumericVector bolt_otpb_impl(NumericVector r, NumericMatrix cij, int nb, double tol);
+RcppExport SEXP _ConsRank_bolt_otpb_impl(SEXP rSEXP, SEXP cijSEXP, SEXP nbSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type r(rSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type cij(cijSEXP);
+    Rcpp::traits::input_parameter< int >::type nb(nbSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(bolt_otpb_impl(r, cij, nb, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
+// bolt_run_impl
+List bolt_run_impl(NumericMatrix seeds, NumericMatrix cij, bool full, bool otp, double tol);
+RcppExport SEXP _ConsRank_bolt_run_impl(SEXP seedsSEXP, SEXP cijSEXP, SEXP fullSEXP, SEXP otpSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type seeds(seedsSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type cij(cijSEXP);
+    Rcpp::traits::input_parameter< bool >::type full(fullSEXP);
+    Rcpp::traits::input_parameter< bool >::type otp(otpSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(bolt_run_impl(seeds, cij, full, otp, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
+// bolt_obj_impl
+NumericVector bolt_obj_impl(NumericMatrix rankings, NumericMatrix cij);
+RcppExport SEXP _ConsRank_bolt_obj_impl(SEXP rankingsSEXP, SEXP cijSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type rankings(rankingsSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type cij(cijSEXP);
+    rcpp_result_gen = Rcpp::wrap(bolt_obj_impl(rankings, cij));
+    return rcpp_result_gen;
+END_RCPP
+}
+// bolt_otp_impl
+NumericVector bolt_otp_impl(NumericVector r, NumericMatrix cij, double tol);
+RcppExport SEXP _ConsRank_bolt_otp_impl(SEXP rSEXP, SEXP cijSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type r(rSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type cij(cijSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(bolt_otp_impl(r, cij, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
 // combinpmatr_impl
 NumericMatrix combinpmatr_impl(NumericMatrix X, Nullable<NumericVector> Wk);
 RcppExport SEXP _ConsRank_combinpmatr_impl(SEXP XSEXP, SEXP WkSEXP) {
@@ -33,17 +101,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< IntegerVector >::type b(bSEXP);
     Rcpp::traits::input_parameter< bool >::type FULL(FULLSEXP);
     rcpp_result_gen = Rcpp::wrap(findbranches_impl(R, ord, b, FULL));
-    return rcpp_result_gen;
-END_RCPP
-}
-// kemenydesign_cpp
-NumericMatrix kemenydesign_cpp(NumericMatrix X);
-RcppExport SEXP _ConsRank_kemenydesign_cpp(SEXP XSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
-    rcpp_result_gen = Rcpp::wrap(kemenydesign_cpp(X));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -119,9 +176,13 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_ConsRank_bolt_run_b_impl", (DL_FUNC) &_ConsRank_bolt_run_b_impl, 4},
+    {"_ConsRank_bolt_otpb_impl", (DL_FUNC) &_ConsRank_bolt_otpb_impl, 4},
+    {"_ConsRank_bolt_run_impl", (DL_FUNC) &_ConsRank_bolt_run_impl, 5},
+    {"_ConsRank_bolt_obj_impl", (DL_FUNC) &_ConsRank_bolt_obj_impl, 2},
+    {"_ConsRank_bolt_otp_impl", (DL_FUNC) &_ConsRank_bolt_otp_impl, 3},
     {"_ConsRank_combinpmatr_impl", (DL_FUNC) &_ConsRank_combinpmatr_impl, 2},
     {"_ConsRank_findbranches_impl", (DL_FUNC) &_ConsRank_findbranches_impl, 4},
-    {"_ConsRank_kemenydesign_cpp", (DL_FUNC) &_ConsRank_kemenydesign_cpp, 1},
     {"_ConsRank_kemenydesign_impl", (DL_FUNC) &_ConsRank_kemenydesign_impl, 1},
     {"_ConsRank_PenaltyBB2_batch_impl", (DL_FUNC) &_ConsRank_PenaltyBB2_batch_impl, 3},
     {"_ConsRank_PenaltyBB2_impl", (DL_FUNC) &_ConsRank_PenaltyBB2_impl, 3},

@@ -4,7 +4,7 @@ Title: Compute the Median Ranking(s) According to the Kemeny's Axiomatic
     Approach
 Version: 3.0
 Date: 2026-02-24
-Authors@R: c(person("Antonio", "D'Ambrosio", role = c("aut", "cre"), email = "antdambr@unina.it"), person("Sonia", "Amodio", role = "ctb"), person("Giulio", "Mazzeo", role = "ctb"), person("Alessandro", "Albano", role = "ctb"), person("Antonella", "Plaia", role = "ctb"))
+Authors@R: c(person("Antonio", "D'Ambrosio", role = c("aut", "cre"), email = "antdambr@unina.it"), person("Sonia", "Amodio", role = "ctb"), person("Giulio", "Mazzeo", role = "ctb"), person("Alessandro", "Albano", role = "ctb"), person("Antonella", "Plaia", role = "ctb"), person("Maurizio", "Romano", role = "ctb"))
 Maintainer: Antonio D'Ambrosio <antdambr@unina.it>
 Depends:
     R (>= 4.1.0)

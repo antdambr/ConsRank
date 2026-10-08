@@ -7,6 +7,8 @@
 #'
 #' @return Tau_x rank correlation coefficient
 #'
+#' @details With complete rankings TauX is a linear function of the Kemeny distance. The rankings can also be partial (missing objects coded NA): as in Emond and Mason (2002), the score of a pair of objects with a missing object is 0, so that the pair does not contribute to the coefficient.
+#'
 #' @references Emond, E. J., and Mason, D. W. (2002). A new rank correlation coefficient with application to the consensus ranking problem. Journal of Multi-Criteria Decision Analysis, 11(1), 17-28.
 #' 
 #' @author Antonio D'Ambrosio \email{antdambr@unina.it}
@@ -34,15 +36,37 @@ tau_x <- function(X,Y=NULL) {
   
   N<-ncol(X)
   maxd<-N*(N-1)
-  if (is(Y,"NULL")){
-    d<-kemenyd(X)
-    tau <- 1-(2*d/maxd)
-  } else {
-    if(is(Y,"numeric") & !is(Y,"matrix")){
-      Y<-matrix(Y,ncol=length(Y))
+  if (!is(Y,"NULL") && is(Y,"numeric") & !is(Y,"matrix")){
+    Y<-matrix(Y,ncol=length(Y))
+  }
+  
+  if (!anyNA(X) && (is(Y,"NULL") || !anyNA(Y))) {
+    # complete rankings: TauX from the Kemeny distance
+    if (is(Y,"NULL")){
+      d<-kemenyd(X)
+      tau <- 1-(2*d/maxd)
+    } else {
+      d<-kemenyd(X,Y)
+      tau <- 1-(2*d/maxd)
     }
-    d<-kemenyd(X,Y)
-    tau <- 1-(2*d/maxd)
+    return(tau)
+  }
+  
+  # partial rankings (NA): TauX as defined by Emond and Mason (2002), from the
+  # score matrices, in which the pairs with a missing object are coded 0. The
+  # result has the same form as for complete rankings
+  scorevec <- function(Z) {
+    t(apply(Z, 1, function(r) as.vector(scorematrix(r, use_cpp = FALSE))))
+  }
+  SX <- scorevec(X)
+  if (is(Y,"NULL")){
+    tau <- 1-(2*kemenyd(matrix(1, nrow(X), N, dimnames = dimnames(X)))/maxd)
+    TT <- tcrossprod(SX) / maxd
+    tau[] <- TT[lower.tri(TT)]
+  } else {
+    tau <- 1-(2*kemenyd(matrix(1, nrow(X), N, dimnames = dimnames(X)),
+                        matrix(1, nrow(Y), N, dimnames = dimnames(Y)))/maxd)
+    tau[] <- tcrossprod(SX, scorevec(Y)) / maxd
   }
   tau 
 }

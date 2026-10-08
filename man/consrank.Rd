@@ -5,7 +5,7 @@
 \title{Branch-and-bound and heuristic algorithms to find consensus (median) ranking according to the Kemeny's axiomatic approach}
 \usage{
 consrank(
-  X,
+  X = NULL,
   wk = NULL,
   ps = TRUE,
   algorithm = "BB",
@@ -16,17 +16,21 @@ consrank(
   ff = 0.4,
   cr = 0.9,
   proc = FALSE,
-  use_cpp = TRUE
+  use_cpp = TRUE,
+  otp = TRUE,
+  maxjudges = Inf,
+  cij = NULL,
+  nj = NULL
 )
 }
 \arguments{
-\item{X}{A n by m data matrix, in which there are n judges and m objects to be judged. Each row is a ranking of the objects which are represented by the columns. If X contains the rankings observed only once, the argument wk can be used}
+\item{X}{A n by m data matrix, in which there are n judges and m objects to be judged. Each row is a ranking of the objects which are represented by the columns. If X contains the rankings observed only once, the argument wk can be used. Either X or cij must be given}
 
 \item{wk}{Optional: the frequency of each ranking in the data}
 
 \item{ps}{If PS=TRUE, on the screen some information about how many branches are processed are displayed.}
 
-\item{algorithm}{Specifies the used algorithm. One among "BB", "quick", "fast" and "decor". algorithm="BB" is the default option.}
+\item{algorithm}{Specifies the used algorithm. One among "BB", "quick", "fast", "decor" and "BOLT". algorithm="BB" is the default option.}
 
 \item{full}{Specifies if the median ranking must be searched in the universe of rankings including all the possible ties (full=FALSE) or in the restricted space of full rankings (permutations). full=FALSE is the default option.}
 
@@ -43,6 +47,14 @@ consrank(
 \item{proc}{For BB algorithm only: proc=TRUE allows the branch and bound algorithm to work in difficult cases, i.e. when the number of objects is larger than 15 or 25. proc=FALSE is the default option}
 
 \item{use_cpp}{Logical. If TRUE (default), uses C++ implementation for faster computation. If FALSE, uses the R implementation.}
+
+\item{otp}{For BOLT algorithm only: if TRUE (default), the optimal tie partitioning step is used (see \code{\link{bolt}}).}
+
+\item{maxjudges}{For BOLT algorithm only: maximum number of distinct rankings of the judges used as starting solutions (see \code{\link{bolt}}). Default Inf (all of them).}
+
+\item{cij}{The combined input matrix (m by m, see \code{\link{combinpmatr}}), to be given instead of X. All the algorithms depend on the data only through this matrix (Emond and Mason, 2002). With cij, the argument wk is ignored and the rankings of the judges are not used as starting solutions by BOLT}
+
+\item{nj}{The number of judges (the sum of the weights, if any) that produced cij. Required when cij is given: it is used to compute the averaged TauX}
 }
 \value{
 a "list" containing the following components:
@@ -60,11 +72,14 @@ large with some missing (>15-20 if full=FALSE, <25-30 if full=TRUE).
 quick algorithm works with a large number of items to be ranked. The solution is quite accurate. 
 fast algorithm works with a large number of items to be ranked by repeating several times the quick algorithm with different random starting points.
 decor algorithm works with a very large number of items to be ranked. 
+BOLT algorithm is a deterministic heuristic that works with a very large number of items (even more than one thousand), see \code{\link{bolt}}.
 For decor algorithm, empirical evidence shows that the number of population individuals (the 'np' parameter) can be set equal to 10, 20 or 30
 for problems till 20, 50 and 100 items. Both scaling rate and crossover ratio (parameters
 'ff' and 'cr') must be set by the user. The default options (ff=0.4, cr=0.9) work well
 for a large variety of data sets
-All algorithms allow the user to set the option 'full=TRUE' if the median ranking(s) must be searched in the restricted space of permutations instead of in the unconstrained universe of rankings of n items including all possible ties
+All algorithms allow the user to set the option 'full=TRUE' if the median ranking(s) must be searched in the restricted space of permutations instead of in the unconstrained universe of rankings of n items including all possible ties 
+
+Instead of the data X, the combined input matrix cij can be given, together with the number of judges nj. This is useful when only the pairwise preferences are available, or when the median ranking of many subsets of the data is needed (the combined input matrix of a group is the sum of those of its parts).
 }
 \examples{
 data(Idea)
@@ -73,6 +88,8 @@ RevIdea<-6-Idea
 # each rankings to have rank 1 = "most associated" and rank 5 = "least associated"
 CR<-consrank(RevIdea)
 CR<-consrank(RevIdea,algorithm="quick")
+# the same median ranking from the combined input matrix
+CR2<-consrank(cij=combinpmatr(RevIdea),nj=nrow(RevIdea))
 #CR<-consrank(RevIdea,algorithm="fast",itermax=10)
 #not run
 #data(EMD)
@@ -89,7 +106,7 @@ Amodio, S., D'Ambrosio, A. and Siciliano, R. (2016). Accurate algorithms for ide
 D'Ambrosio, A., Mazzeo, G., Iorio, C., and Siciliano, R. (2017). A differential evolution algorithm for finding the median ranking under the Kemeny axiomatic approach. Computers and Operations Research, vol. 82, pp. 126-138.
 }
 \seealso{
-\code{\link{iwquickcons}}
+\code{\link{iwquickcons}}, \code{\link{bolt}}, \code{\link{mcbo}}
 }
 \author{
 Antonio D'Ambrosio \email{antdambr@unina.it}

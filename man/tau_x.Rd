@@ -20,6 +20,9 @@ Tau_x rank correlation coefficient
 \description{
 Tau exstension is a new rank correlation coefficient defined by Emond and Mason (2002)
 }
+\details{
+With complete rankings TauX is a linear function of the Kemeny distance. The rankings can also be partial (missing objects coded NA): as in Emond and Mason (2002), the score of a pair of objects with a missing object is 0, so that the pair does not contribute to the coefficient.
+}
 \examples{
 data(BU)
 RD<-BU[,1:3]
