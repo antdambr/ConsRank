@@ -1,20 +1,40 @@
 #' Plot rankings on a permutation polytope of 3 or 4 objects
 #'
-#' @param X Sample of rankings (matrix). Usually returned by tabulaterows()
+#' @param X Sample of rankings (matrix), either one row for each judge or the distinct rankings
+#'   returned by tabulaterows() with their frequencies in Wk
 #' @param L Labels of the objects (character vector)
-#' @param Wk Frequency weights for each ranking (numeric vector)
+#' @param Wk Frequency weights for each ranking (numeric vector). If NULL, each row of X counts 1
 #' @param nobj Number of objects: 3 or 4 (integer)
 #' @param engine Rendering engine for 4-object plots: "auto", "rgl", or "plotly" (character)
+#' @param size Scale factor of the symbols (default 1): values larger than 1 enlarge them
 #'
 #' @return For nobj=3: invisible NULL (creates base graphics plot)
 #'         For nobj=4: invisible NULL for rgl, plotly object for plotly engine
 #'
-#' @details 
+#' @details
 #' For 3 objects: uses base R graphics (always available)
-#' For 4 objects: 
+#' For 4 objects:
 #'   - engine="auto": tries rgl first, falls back to plotly if unavailable
 #'   - engine="rgl": requires 'rgl' package (may need XQuartz on macOS)
 #'   - engine="plotly": requires 'plotly' package (works on all platforms)
+#'
+#' Each observed ranking is drawn as a circle (3 objects) or a sphere (4 objects) whose area is
+#' proportional to its frequency, i.e. the sum of the weights Wk of the rows of X equal to it (rows
+#' with ties are matched whatever the coding of the ties, e.g. (1, 3, 3) and (1, 2, 2)); the most
+#' frequent ranking has the largest symbol, whose size is controlled by \code{size}. If X is NULL,
+#' all the points of the polytope are shown. With the plotly engine the frequency is shown when the
+#' mouse is over a point.
+#'
+#' @examples
+#' data(BU)
+#' polyplotnew(BU[, 1:3], Wk = BU[, 4])
+#' \donttest{
+#' data(German)
+#' tab <- tabulaterows(German)
+#' if (requireNamespace("rgl", quietly = TRUE)) {
+#'   polyplotnew(tab$X, Wk = tab$Wk, nobj = 4, engine = "rgl")
+#' }
+#' }
 #'
 #' @references 
 #' Thompson, G. L. (1993). Generalized permutation polytopes and exploratory 
@@ -28,15 +48,19 @@
 #'
 #' @export
 
-polyplotnew <- function(X = NULL, L = NULL, Wk = NULL, nobj = 3, engine = "auto") {
-  
+polyplotnew <- function(X = NULL, L = NULL, Wk = NULL, nobj = 3, engine = "auto", size = 1) {
+
   # Input validation
   if (!nobj %in% c(3, 4)) {
     stop("nobj must be either 3 or 4")
   }
-  
+
   if (!engine %in% c("auto", "rgl", "plotly")) {
     stop("engine must be 'auto', 'rgl', or 'plotly'")
+  }
+
+  if (!is.numeric(size) || length(size) != 1 || size <= 0) {
+    stop("size must be a positive number")
   }
   
   # ═══════════════════════════════════════════════════════════════════════════
@@ -44,7 +68,7 @@ polyplotnew <- function(X = NULL, L = NULL, Wk = NULL, nobj = 3, engine = "auto"
   # ═══════════════════════════════════════════════════════════════════════════
   
   if (nobj == 3) {
-    return(plot_polytope_3d(X, L, Wk))
+    return(plot_polytope_3d(X, L, Wk, size))
   }
   
   # ═══════════════════════════════════════════════════════════════════════════
@@ -56,9 +80,9 @@ polyplotnew <- function(X = NULL, L = NULL, Wk = NULL, nobj = 3, engine = "auto"
   }
   
   if (engine == "rgl") {
-    return(plot_polytope_4d_rgl(X, L, Wk))
+    return(plot_polytope_4d_rgl(X, L, Wk, size))
   } else {
-    return(plot_polytope_4d_plotly(X, L, Wk))
+    return(plot_polytope_4d_plotly(X, L, Wk, size))
   }
 }
 
@@ -102,7 +126,7 @@ choose_engine <- function() {
 # 3D PLOT (3 objects) - Base graphics
 # ═══════════════════════════════════════════════════════════════════════════
 
-plot_polytope_3d <- function(X, L, Wk) {
+plot_polytope_3d <- function(X, L, Wk, size = 1) {
   
   # Define polytope structure
   ranks <- rbind(
@@ -116,7 +140,7 @@ plot_polytope_3d <- function(X, L, Wk) {
     c(2, 1, 1),  # (BC)A
     c(3, 1, 2),  # BCA
     c(2, 1, 2),  # B(AC)
-    c(3, 1, 3),  # BAC (corrected from original c(3,1,2))
+    c(2, 1, 3),  # BAC
     c(1, 1, 2),  # (AB)C
     c(1, 1, 1)   # (ABC)
   )
@@ -141,21 +165,21 @@ plot_polytope_3d <- function(X, L, Wk) {
   # Generate labels
   rr <- labelsn(ranks, 3, if (is.null(L)) 1:3 else L, labs = if (is.null(L)) 2 else 1)
   
-  # Find which rankings to plot
-  indplot <- find_rankings_to_plot(X, ranks)
-  
+  # Observed rankings and their frequencies
+  pw <- polytope_weights(X, Wk, ranks)
+
   # Create base plot
-  plot(coord, ylim = c(-0.5, 0.5), xlim = c(-0.5, 0.5), 
-       axes = FALSE, ann = FALSE)
-  
+  plot(coord, ylim = c(-0.5, 0.5), xlim = c(-0.5, 0.5),
+       axes = FALSE, ann = FALSE, asp = 1)
+
   # Draw polytope edges
   draw_polytope_edges_3d(coord)
-  
+
   # Adjust text coordinates for readability
   tcoord <- adjust_text_coordinates_3d(coord)
-  
+
   # Plot points
-  plot_points_3d(coord, indplot, X, ranks, Wk, rr, tcoord)
+  plot_points_3d(coord, pw, rr, tcoord, size)
   
   invisible(NULL)
 }
@@ -204,23 +228,24 @@ adjust_text_coordinates_3d <- function(coord) {
 # HELPER: Plot points for 3D
 # ═══════════════════════════════════════════════════════════════════════════
 
-plot_points_3d <- function(coord, indplot, X, ranks, Wk, rr, tcoord) {
-  
-  if (is.null(Wk)) {
-    # Simple points
-    points(coord[indplot, 1], coord[indplot, 2], 
-           pch = 16, cex = 0.8, col = "blue")
+plot_points_3d <- function(coord, pw, rr, tcoord, size = 1) {
+
+  indplot <- pw$ind
+
+  if (is.null(pw$w)) {
+    # all the points of the polytope
+    points(coord[indplot, 1], coord[indplot, 2],
+           pch = 16, cex = 0.8 * size, col = "blue")
   } else {
-    # Weighted points
-    idwk <- match_rankings_to_weights(X, ranks)
-    sizes <- sqrt(100 * ((Wk[idwk] / sum(Wk)) / pi) / 2)
-    
-    points(coord[indplot, 1], coord[indplot, 2], 
-           pch = 16, cex = sizes, col = "blue")
+    # circles with area proportional to the frequencies
+    sizes <- pmax(0.5, 6 * size * relsize(pw$w))
+    points(coord[indplot, 1], coord[indplot, 2],
+           pch = 21, cex = sizes, col = "blue",
+           bg = grDevices::adjustcolor("blue", alpha.f = 0.6))
   }
-  
+
   # Add labels
-  text(tcoord[indplot, ], rr[indplot, ])
+  text(tcoord[indplot, , drop = FALSE], rr[indplot, ])
 }
 
 
@@ -228,42 +253,41 @@ plot_points_3d <- function(coord, indplot, X, ranks, Wk, rr, tcoord) {
 # 4D PLOT - rgl version
 # ═══════════════════════════════════════════════════════════════════════════
 
-plot_polytope_4d_rgl <- function(X, L, Wk) {
-  
+plot_polytope_4d_rgl <- function(X, L, Wk, size = 1) {
+
   if (!requireNamespace("rgl", quietly = TRUE)) {
     stop("rgl package is required but not available")
   }
-  
+
   # Get polytope structure
   structure <- create_polytope_4d_structure()
-  
+
   # Generate labels
-  rr <- labelsn(structure$ranks, 4, 
-                if (is.null(L)) 1:4 else L, 
+  rr <- labelsn(structure$ranks, 4,
+                if (is.null(L)) 1:4 else L,
                 labs = if (is.null(L)) 2 else 1)
-  
-  # Find rankings to plot
-  indplot <- find_rankings_to_plot(X, structure$ranks)
-  
+
+  # Observed rankings and their frequencies
+  pw <- polytope_weights(X, Wk, structure$ranks)
+
   # Initialize 3D plot
   rgl::plot3d(structure$coord, type = 'p', xlab = '', ylab = '', zlab = '',
               aspect = TRUE, box = FALSE, axes = FALSE, col = 1)
-  
+
   # Draw all edges
   draw_polytope_edges_4d_rgl(structure)
-  
+
   # Plot points/spheres
-  plot_spheres_rgl(structure$coord, indplot, X, structure$ranks, Wk)
-  
-  # Add text labels
-  rgl::text3d(
-    structure$coord[indplot, 1] + 0.1,
-    structure$coord[indplot, 2] + 0.1,
-    structure$coord[indplot, 3] + 0.1,
-    rr[indplot, ],
-    col = 1, cex = 0.7
-  )
-  
+  radius <- plot_spheres_rgl(structure$coord, pw, size)
+
+  # Add text labels, moved outwards (from the center of the polytope) beyond the spheres
+  xyz <- structure$coord[pw$ind, , drop = FALSE]
+  dir <- sweep(xyz, 2, structure$coord[nrow(structure$coord), ])
+  len <- sqrt(rowSums(dir^2))
+  len[len == 0] <- 1
+  rgl::text3d(xyz + dir / len * (radius + 0.15), texts = rr[pw$ind, ],
+              col = 1, cex = 0.7)
+
   invisible(NULL)
 }
 
@@ -272,7 +296,7 @@ plot_polytope_4d_rgl <- function(X, L, Wk) {
 # 4D PLOT - plotly version
 # ═══════════════════════════════════════════════════════════════════════════
 
-plot_polytope_4d_plotly <- function(X, L, Wk) {
+plot_polytope_4d_plotly <- function(X, L, Wk, size = 1) {
   
   if (!requireNamespace("plotly", quietly = TRUE)) {
     stop("plotly package is required but not available")
@@ -286,17 +310,17 @@ plot_polytope_4d_plotly <- function(X, L, Wk) {
                 if (is.null(L)) 1:4 else L, 
                 labs = if (is.null(L)) 2 else 1)
   
-  # Find rankings to plot
-  indplot <- find_rankings_to_plot(X, structure$ranks)
-  
+  # Observed rankings and their frequencies
+  pw <- polytope_weights(X, Wk, structure$ranks)
+
   # Create plotly object
   p <- plotly::plot_ly()
-  
+
   # Add edges
   p <- add_polytope_edges_plotly(p, structure)
-  
+
   # Add points
-  p <- add_points_plotly(p, structure$coord, indplot, X, structure$ranks, Wk, rr)
+  p <- add_points_plotly(p, structure$coord, pw, rr, size)
   
   # Configure layout
   p <- p |>plotly::layout(
@@ -674,15 +698,19 @@ add_polytope_edges_plotly <- function(p, structure) {
 # HELPER: Plot spheres (rgl)
 # ═══════════════════════════════════════════════════════════════════════════
 
-plot_spheres_rgl <- function(coord, indplot, X, ranks, Wk) {
-  
-  if (is.null(Wk)) {
-    rgl::spheres3d(coord[indplot, ], col = "blue", radius = 0.02)
+plot_spheres_rgl <- function(coord, pw, size = 1) {
+
+  if (is.null(pw$w)) {
+    # all the points of the polytope
+    radii <- rep(0.04 * size, length(pw$ind))
   } else {
-    idwk <- match_rankings_to_weights(X, ranks)
-    radii <- sqrt(((Wk[idwk] / sum(Wk)) / (25 * pi)))
-    rgl::spheres3d(coord[indplot, ], col = "blue", radius = radii)
+    # spheres whose cross-section is proportional to the frequencies
+    # (the edges of the polytope have length 1)
+    radii <- pmax(0.03, 0.3 * size * relsize(pw$w))
   }
+  rgl::spheres3d(coord[pw$ind, , drop = FALSE], col = "royalblue", radius = radii, alpha = 0.6)
+
+  invisible(radii)
 }
 
 
@@ -690,86 +718,88 @@ plot_spheres_rgl <- function(coord, indplot, X, ranks, Wk) {
 # HELPER: Add points (plotly)
 # ═══════════════════════════════════════════════════════════════════════════
 
-add_points_plotly <- function(p, coord, indplot, X, ranks, Wk, rr) {
-  
-  if (is.null(Wk)) {
-    # Simple markers
-    p <- p |>plotly::add_trace(
-      x = coord[indplot, 1],
-      y = coord[indplot, 2],
-      z = coord[indplot, 3],
-      type = "scatter3d",
-      mode = "markers+text",
-      marker = list(size = 5, color = "blue"),
-      text = rr[indplot, ],
-      textposition = "top center",
-      textfont = list(size = 10, color = "black"),
-      showlegend = FALSE,
-      hoverinfo = "text"
-    )
+add_points_plotly <- function(p, coord, pw, rr, size = 1) {
+
+  indplot <- pw$ind
+
+  if (is.null(pw$w)) {
+    # all the points of the polytope
+    sizes <- 5 * size
+    hover <- rr[indplot, ]
   } else {
-    # Weighted markers
-    idwk <- match_rankings_to_weights(X, ranks)
-    sizes <- sqrt(((Wk[idwk] / sum(Wk)) / (25 * pi))) * 100
-    
-    p <- p |>plotly::add_trace(
-      x = coord[indplot, 1],
-      y = coord[indplot, 2],
-      z = coord[indplot, 3],
-      type = "scatter3d",
-      mode = "markers+text",
-      marker = list(size = sizes, color = "blue", sizemode = "diameter"),
-      text = rr[indplot, ],
-      textposition = "top center",
-      textfont = list(size = 10, color = "black"),
-      showlegend = FALSE,
-      hoverinfo = "text"
-    )
+    # markers with area proportional to the frequencies
+    sizes <- pmax(4, 40 * size * relsize(pw$w))
+    hover <- paste0(rr[indplot, ], ": ", pw$w)
   }
-  
+
+  p <- p |>plotly::add_trace(
+    x = coord[indplot, 1],
+    y = coord[indplot, 2],
+    z = coord[indplot, 3],
+    type = "scatter3d",
+    mode = "markers+text",
+    marker = list(size = sizes, color = "royalblue", opacity = 0.7, sizemode = "diameter"),
+    text = rr[indplot, ],
+    hovertext = hover,
+    textposition = "top center",
+    textfont = list(size = 10, color = "black"),
+    showlegend = FALSE,
+    hoverinfo = "text"
+  )
+
   return(p)
 }
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# HELPER: Find which rankings to plot
+# HELPER: Observed points of the polytope and their frequencies
 # ═══════════════════════════════════════════════════════════════════════════
 
-find_rankings_to_plot <- function(X, ranks) {
-  
+# The rows of X are put in dense form (1, 2, ... with tied objects sharing the
+# same value, so that e.g. (1, 3, 3) becomes (1, 2, 2), the coding of ranks) and
+# matched to the rows of ranks; the weights of equal rankings are summed (each
+# row counts 1 if Wk is NULL). Returns the indices of the observed points of the
+# polytope (ind) and their frequencies (w); if X is NULL, all the points and w = NULL.
+
+polytope_weights <- function(X, Wk, ranks) {
+
   if (is.null(X)) {
-    return(1:nrow(ranks))
+    return(list(ind = seq_len(nrow(ranks)), w = NULL))
   }
-  
-  # Match X rankings to polytope ranks
-  matches <- apply(X, 1, function(x_row) {
-    which(apply(ranks, 1, function(r_row) all(r_row == x_row)))
-  })
-  
-  unique(unlist(matches))
+
+  X <- as.matrix(X)
+  if (ncol(X) != ncol(ranks)) {
+    stop("X must have ", ncol(ranks), " columns")
+  }
+  if (is.null(Wk)) {
+    Wk <- rep(1, nrow(X))
+  }
+  Wk <- as.numeric(Wk)
+  if (length(Wk) != nrow(X)) {
+    stop("Wk must have one value for each row of X")
+  }
+
+  dense <- t(apply(X, 1, function(r) match(r, sort(unique(r)))))
+  key <- match(apply(dense, 1, paste, collapse = " "),
+               apply(ranks, 1, paste, collapse = " "))
+  if (anyNA(key)) {
+    warning(sum(is.na(key)), " row(s) of X not plotted (missing values)")
+  }
+
+  ok <- !is.na(key)
+  w <- numeric(nrow(ranks))
+  w[sort(unique(key[ok]))] <- rowsum(Wk[ok], key[ok])[, 1]
+  ind <- which(w > 0)
+
+  list(ind = ind, w = w[ind])
 }
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# HELPER: Match rankings to weights
-# ═══════════════════════════════════════════════════════════════════════════
+# relative size of the symbols: the area is proportional to the frequency and
+# the most frequent ranking has relative size 1
 
-match_rankings_to_weights <- function(X, ranks) {
-  
-  idwk <- integer(nrow(X))
-  counter <- 0
-  
-  for (i in 1:nrow(ranks)) {
-    for (j in 1:nrow(X)) {
-      if (all(X[j, ] == ranks[i, ])) {
-        counter <- counter + 1
-        idwk[counter] <- j
-        break
-      }
-    }
-  }
-  
-  idwk[1:counter]
+relsize <- function(w) {
+  sqrt(w / max(w))
 }
 
 

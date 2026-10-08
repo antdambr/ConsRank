@@ -33,15 +33,19 @@ export(univranks)
 import(gtools)
 import(proxy)
 importFrom(Rcpp,sourceCpp)
-importFrom(graphics,lines)
-importFrom(graphics,plot)
-importFrom(graphics,points)
-importFrom(graphics,text)
+importFrom(graphics,
+  lines,
+  plot,
+  points,
+  text
+)
 importFrom(gtools,combinations)
 importFrom(methods,is)
 importFrom(proxy,dist)
-importFrom(rlist,list.cbind)
-importFrom(rlist,list.rbind)
+importFrom(rlist,
+  list.cbind,
+  list.rbind
+)
 importFrom(stats,runif)
 importFrom(tidyr,crossing)
 useDynLib(ConsRank, .registration = TRUE)
