@@ -7,7 +7,11 @@
 univranks(X, k = NULL, ordering = TRUE)
 }
 \arguments{
-\item{X}{A ranking, an ordering, a matrix of rankings, a matrix of orderings or a number}
+\item{X}{A number (the number of items), or a single ranking (a numeric vector, or a
+numeric matrix with one row), or an ordering. With a number, the universe of the
+rankings of X items is generated (constrained into k buckets if k is given); with a
+ranking or an ordering, the rankings with the same groups of tied items, i.e., all
+the orders of its buckets}
 
 \item{k}{Optional: the number of the non-empty subsets. It has to be used only if X is anumber. The default value is NULL, In this case the universe of rankings with n=X items are computed}
 
@@ -20,7 +24,7 @@ Runiv \tab  \tab The universe of rankings\cr
 Cuniv \tab       \tab A list containing:\cr
  \tab R   \tab The universe of rankings in terms of rankings;\cr
  \tab Parts \tab for each ranking in input the produced rankings\cr
- \tab Univinbuckets \tab the universe of rankings within each bucket}
+ \tab Univinbucket \tab the universe of rankings within each bucket}
 }
 \description{
 Generate the universe of rankings given the input partition

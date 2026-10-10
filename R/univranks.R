@@ -2,7 +2,11 @@
 #'
 #'Generate the universe of rankings given the input partition
 #'
-#' @param X A ranking, an ordering, a matrix of rankings, a matrix of orderings or a number
+#' @param X A number (the number of items), or a single ranking (a numeric vector, or a
+#'   numeric matrix with one row), or an ordering. With a number, the universe of the
+#'   rankings of X items is generated (constrained into k buckets if k is given); with a
+#'   ranking or an ordering, the rankings with the same groups of tied items, i.e., all
+#'   the orders of its buckets
 #' @param k Optional: the number of the non-empty subsets. It has to be used only if X is anumber. The default value is NULL, In this case the universe of rankings with n=X items are computed
 #' @param ordering The universe of rankings must be returned as orderings (default) or rankings?
 #' 
@@ -14,7 +18,7 @@
 #' Cuniv \tab       \tab A list containing:\cr
 #'  \tab R   \tab The universe of rankings in terms of rankings;\cr
 #'  \tab Parts \tab for each ranking in input the produced rankings\cr
-#'  \tab Univinbuckets \tab the universe of rankings within each bucket}
+#'  \tab Univinbucket \tab the universe of rankings within each bucket}
 #' 
 #' @examples
 #' S2<-stirling2(4,4)$SM[4,] #indicates in how many ways 4 objects
@@ -48,7 +52,11 @@
 
 
 univranks = function(X,k=NULL,ordering=TRUE){
-  if (!is(X,"numeric")){ 
+  if (is.matrix(X) && is.numeric(X)){ #a ranking given as a matrix
+    if (nrow(X) > 1) stop("give a single ranking: X must be a number of items, a ranking or an ordering")
+    X<-X[1,] #a matrix with one row is the corresponding rank vector
+  }
+  if (!is(X,"numeric")){
     X<-order2rank(X) } else if (is(X,"numeric")){
       if (length(X)==1){X<-order2rank(partitions(X,k))}
     }
