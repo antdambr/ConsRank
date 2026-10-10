@@ -1,4 +1,4 @@
-# ConsRank 3.1 (development version)
+# ConsRank 3.1
 
 ## New features
 
@@ -78,9 +78,26 @@
   the pattern is computed exactly by dynamic programming (one admissible cut
   where a size is prescribed, all of them where it is free), and the local search
   moves one object to another bucket making one object cross each boundary in
-  between, so that every bucket keeps its size.
+  between, so that every bucket keeps its size. Either `nbuckets` or `bucketsizes`
+  must be given, not both: to fix the number of buckets of a pattern, NA is used
+  for the buckets of free size (e.g. `bucketsizes = c(1, 1, NA, NA, NA)`).
+
+* New function `consranktopk()`: the median top-k list, i.e. the consensus
+  ranking with k objects in strict order in the first k positions and all the
+  other objects tied in the last position. It is a shortcut for
+  `mcbo(..., bucketsizes = rep(1, k), algorithm = "BOLT")`, with the same
+  results; the output also contains `TopK`, the names of the k objects in order.
 
 ## Changes
+
+* `mcbo()` accepts `nbuckets` equal to the number of objects: the solution is
+  then a full ranking, and the result is the one of `consrank(..., full = TRUE)`
+  with the same algorithm and parameters (before: error "nbuckets must be less
+  than N").
+
+* The defunct function `labels()` has been removed: being exported, it masked
+  `base::labels()`, so that after `library(ConsRank)` any call to `labels()`
+  stopped with the message that the function is defunct. Use `rank2order()`.
 
 * `mcbo(algorithm = "quick")` is now deterministic, more accurate and faster;
   the results differ from those of the version described in D'Ambrosio et al.
@@ -158,6 +175,10 @@
 
 ## Bug fixes
 
+* `mcbo(algorithm = "decor")`: when several individuals of the initial
+  population had the same best cost, the stored best individuals were shifted
+  with respect to their costs, so that the solution returned could differ from
+  the one with the reported TauX.
 * `consrank(algorithm = "decor")` stopped with an error when several individuals of
   the initial population had the same best cost.
 * `consrank(algorithm = "decor")`: when the combined input matrix contains only
@@ -183,3 +204,11 @@
   (the ranking BAC was coded as (3, 1, 3)), and the weights `Wk` were assigned to
   the wrong points. The area of each symbol is now proportional to the frequency
   of the ranking (argument `size`), with semi-transparent symbols.
+
+* Defunct functions: the messages of `EMCons()` and `FASTDECOR()` pointed to
+  algorithms that do not exist (`"EM"`, `"fastdecor"`); they now point to
+  `consrank(algorithm = "BB")` and `consrank(algorithm = "decor")`.
+
+* Help page of the package (`?ConsRank`): removed the version and date, which
+  were those of version 2.1.0, and completed the list of contributors as in the
+  DESCRIPTION file.

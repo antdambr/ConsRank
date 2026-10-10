@@ -8,14 +8,21 @@
 #'   Each row is a ranking of the objects which are represented by the columns. 
 #'   If X contains the rankings observed only once, the argument wk can be used
 #' @param nbuckets Integer. The number of buckets (tied groups) the consensus ranking
-#'   must contain. Must be between 2 and M-1 (where M is the number of objects).
-#'   Either nbuckets or bucketsizes must be given
+#'   must contain. Must be between 2 and M (where M is the number of objects); with
+#'   M buckets the solution is a full ranking and the result is the one of
+#'   \code{consrank(..., full = TRUE)} with the same algorithm.
+#'   Give either nbuckets or bucketsizes, not both
 #' @param bucketsizes Optional pattern of bucket sizes, one element per bucket: a
 #'   whole number greater than zero prescribes the size of that bucket, NA leaves
 #'   it free. If the sizes given do not use all the objects and no NA is present,
 #'   one free bucket is added at the end, so that with ten objects
 #'   \code{bucketsizes = c(1, 1, 1)} means three buckets of one object and a
-#'   fourth one with the remaining seven, that is a top-3 list. A pattern of ones
+#'   fourth one with the remaining seven, that is a top-3 list; in the same way,
+#'   with any number of objects, \code{bucketsizes = rep(1, 10)} is the top-10
+#'   list, with all the other objects tied in the last position. To fix the number
+#'   of buckets of a pattern, use NA for the buckets of free size: for instance
+#'   \code{bucketsizes = c(1, 1, NA, NA, NA)} gives five buckets, the first two
+#'   with one object each. A pattern of ones
 #'   is a full ranking, a pattern of NAs is the plain constrained bucket order of
 #'   nbuckets buckets, and a single bucket is the solution with all the objects
 #'   tied. Available with algorithm = "BOLT" only, which is used by default when
@@ -195,14 +202,16 @@ mcbo <- function(X = NULL, nbuckets = NULL, wk = NULL, ps = TRUE,
   
   # Validation checks
   # the solution is constrained either by the number of buckets or by a pattern
-  # of bucket sizes; with a pattern the number of buckets is its length
+  # of bucket sizes, never by both; with a pattern the number of buckets is its
+  # length
   patgiven <- !is.null(bucketsizes)
+  if (patgiven && !is.null(nbuckets)) {    # both constraints given: refuse them
+    stop("give either nbuckets or bucketsizes, not both: to fix the number of ",
+         "buckets in a pattern, use NA for the buckets of free size, e.g. ",
+         "bucketsizes = c(1, 1, NA, NA, NA)")
+  }
   if (patgiven) {
     bucketsizes <- checkbucketsizes(bucketsizes, N)
-    if (!is.null(nbuckets) && nbuckets != length(bucketsizes)) {
-      stop("nbuckets (", nbuckets, ") and the length of bucketsizes (",
-           length(bucketsizes), ") disagree")
-    }
     nbuckets <- length(bucketsizes)
     if (!"algorithm" %in% names(match.call())) {
       algorithm <- "BOLT"                 # the pattern is handled by BOLT only
@@ -212,7 +221,8 @@ mcbo <- function(X = NULL, nbuckets = NULL, wk = NULL, ps = TRUE,
   } else {
     if (is.null(nbuckets)) stop("either nbuckets or bucketsizes must be given")
     if (nbuckets < 2) stop("nbuckets must be at least 2")
-    if (nbuckets >= N) stop(paste0("nbuckets must be less than N (", N, ")"))
+    if (nbuckets > N) stop(paste0("nbuckets cannot be larger than the number of ",
+                                  "objects (", N, ")"))
   }
   
   valid_algorithms <- c("BB", "quick", "decor", "BOLT")
@@ -226,7 +236,23 @@ mcbo <- function(X = NULL, nbuckets = NULL, wk = NULL, ps = TRUE,
     if (length(wk) != M) stop("Length of wk must equal number of rows in X")
     if (any(wk <= 0)) stop("All weights must be positive")
   }
-  
+
+  # as many buckets as objects: the solution is a full ranking (permutation), so
+  # the problem is the one of consrank(full = TRUE), solved by the same algorithm
+  # with the same parameters
+  if (!patgiven && nbuckets == N) {
+    if (cijgiven) {                                     # from the combined input matrix
+      out <- consrank(cij = cij, nj = nj, ps = ps, algorithm = algorithm,
+                      full = TRUE, itermax = itermax, np = np, gl = gl, ff = ff,
+                      cr = cr, use_cpp = use_cpp, maxjudges = maxjudges)
+    } else {                                            # from the data
+      out <- consrank(X, wk = wk, ps = ps, algorithm = algorithm, full = TRUE,
+                      itermax = itermax, np = np, gl = gl, ff = ff, cr = cr,
+                      use_cpp = use_cpp, maxjudges = maxjudges)
+    }
+    return(out)                                         # same output as consrank
+  }
+
   # ══════════════════════════════════════════════════════════════════════════
   # 2. COMPUTE COMBINED INPUT MATRIX
   # ══════════════════════════════════════════════════════════════════════════
@@ -1036,7 +1062,10 @@ decorbuckets <- function(NP, L, FF, CR, cij, NJ, buckets, use_cpp = TRUE) {
   
   # Store best individual
   bestc <- min(costs)
-  bestind <- which(costs == min(costs))
+  # one best individual per generation, so that the rows of besti stay aligned
+  # with the elements of bestc (before: all the tied best individuals of the
+  # first generation were stored, shifting the rows of besti)
+  bestind <- which.min(costs)
   bestT <- max(taos)
   besti <- population[bestind, , drop = FALSE]
   

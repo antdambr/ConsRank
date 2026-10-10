@@ -8,7 +8,6 @@
 \alias{FASTcons}
 \alias{DECOR}
 \alias{FASTDECOR}
-\alias{labels}
 \title{Defunct functions in ConsRank}
 \usage{
 EMCons(...)
@@ -22,8 +21,6 @@ FASTcons(...)
 DECOR(...)
 
 FASTDECOR(...)
-
-labels(...)
 }
 \description{
 These functions have been removed from ConsRank. Use the alternatives listed below.
@@ -35,8 +32,7 @@ These functions have been removed from ConsRank. Use the alternatives listed bel
   \item \code{BBFULL}: Use \code{\link{consrank}} with \code{algorithm = "BB"} and \code{full = TRUE}
   \item \code{FASTcons}: Use \code{\link{consrank}} with \code{algorithm = "fast"}
   \item \code{DECOR}: Use \code{\link{consrank}} with \code{algorithm = "decor"}
-  \item \code{FASTDECOR}: Use \code{\link{consrank}} with \code{algorithm = "fastdecor"}
-  \item \code{labels}: Functionality merged into \code{\link{rank2order}}
+  \item \code{FASTDECOR}: Use \code{\link{consrank}} with \code{algorithm = "decor"}
 }
 }
 \keyword{internal}

@@ -28,8 +28,10 @@ Each row is a ranking of the objects which are represented by the columns.
 If X contains the rankings observed only once, the argument wk can be used}
 
 \item{nbuckets}{Integer. The number of buckets (tied groups) the consensus ranking
-must contain. Must be between 2 and M-1 (where M is the number of objects).
-Either nbuckets or bucketsizes must be given}
+must contain. Must be between 2 and M (where M is the number of objects); with
+M buckets the solution is a full ranking and the result is the one of
+\code{consrank(..., full = TRUE)} with the same algorithm.
+Give either nbuckets or bucketsizes, not both}
 
 \item{wk}{Optional: the frequency of each ranking in the data}
 
@@ -78,7 +80,12 @@ whole number greater than zero prescribes the size of that bucket, NA leaves
 it free. If the sizes given do not use all the objects and no NA is present,
 one free bucket is added at the end, so that with ten objects
 \code{bucketsizes = c(1, 1, 1)} means three buckets of one object and a
-fourth one with the remaining seven, that is a top-3 list. A pattern of ones
+fourth one with the remaining seven, that is a top-3 list; in the same way,
+with any number of objects, \code{bucketsizes = rep(1, 10)} is the top-10
+list, with all the other objects tied in the last position. To fix the number
+of buckets of a pattern, use NA for the buckets of free size: for instance
+\code{bucketsizes = c(1, 1, NA, NA, NA)} gives five buckets, the first two
+with one object each. A pattern of ones
 is a full ranking, a pattern of NAs is the plain constrained bucket order of
 nbuckets buckets, and a single bucket is the solution with all the objects
 tied. Available with algorithm = "BOLT" only, which is used by default when

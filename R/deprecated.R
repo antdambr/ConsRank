@@ -9,8 +9,7 @@
 #'   \item \code{BBFULL}: Use \code{\link{consrank}} with \code{algorithm = "BB"} and \code{full = TRUE}
 #'   \item \code{FASTcons}: Use \code{\link{consrank}} with \code{algorithm = "fast"}
 #'   \item \code{DECOR}: Use \code{\link{consrank}} with \code{algorithm = "decor"}
-#'   \item \code{FASTDECOR}: Use \code{\link{consrank}} with \code{algorithm = "fastdecor"}
-#'   \item \code{labels}: Functionality merged into \code{\link{rank2order}}
+#'   \item \code{FASTDECOR}: Use \code{\link{consrank}} with \code{algorithm = "decor"}
 #' }
 #' 
 #' @name ConsRank-defunct
@@ -23,7 +22,7 @@ EMCons <- function(...) {
   .Defunct(
     new = "consrank",
     package = "ConsRank",
-    msg = "EMCons() is defunct. Use consrank(algorithm = 'EM') instead."
+    msg = "EMCons() is defunct. Use consrank(algorithm = 'BB') instead."
   )
 }
 
@@ -73,16 +72,6 @@ FASTDECOR <- function(...) {
   .Defunct(
     new = "consrank",
     package = "ConsRank",
-    msg = "FASTDECOR() is defunct. Use consrank(algorithm = 'fastdecor') instead."
-  )
-}
-
-#' @rdname ConsRank-defunct
-#' @export
-labels <- function(...) {
-  .Defunct(
-    new = "consrank",
-    package = "ConsRank",
-    msg = "labels() is defunct. This functionality is now integrated in rank2order()."
+    msg = "FASTDECOR() is defunct. Use consrank(algorithm = 'decor') instead."
   )
 }

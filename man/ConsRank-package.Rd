@@ -6,20 +6,10 @@
 Median Ranking Approach According to the Kemeny's Axiomatic Approach
 }
 \description{
-Compute the median ranking according to the Kemeny's axiomatic approach. Rankings can or cannot contain ties, rankings can be both complete or incomplete. The package contains both branch-and-bound and heuristic solutions as well as routines for computing the median constrained bucket order and the K-median cluster component analysis. The package also contains routines for visualize rankings and for detecting the universe of rankings including ties.
-}
-\details{
-\tabular{ll}{
-Package: \tab ConsRank\cr
-Type: \tab Package\cr
-Version: \tab 2.1.0\cr
-Date: \tab 2017-04-28\cr
-License: \tab GPL-3\cr
-}
-
+Compute the median ranking according to the Kemeny's axiomatic approach. Rankings can or cannot contain ties, rankings can be both complete or incomplete. The package contains both branch-and-bound and heuristic solutions, including the deterministic BOLT algorithm (\code{\link{bolt}}), as well as routines for computing the median constrained bucket order, with a given number of buckets or a given pattern of bucket sizes (\code{\link{mcbo}}), and the median top-k list (\code{\link{consranktopk}}). The package also contains routines for visualizing rankings and for detecting the universe of rankings including ties.
 }
 \author{
-Antonio D'Ambrosio [cre,aut] <antdambr@unina.it>, Sonia Amdio <sonia.amodio@unina.it> [ctb], Giulio Mazzeo [ctb] <giuliomazzeo@gmail.com>
+Antonio D'Ambrosio [cre,aut] <antdambr@unina.it>, Sonia Amodio <sonia.amodio@unina.it> [ctb], Giulio Mazzeo [ctb] <giuliomazzeo@gmail.com>, Alessandro Albano [ctb], Antonella Plaia [ctb], Maurizio Romano [ctb]
 
 Maintainer: Antonio D'Ambrosio <antdambr@unina.it>
 }
@@ -30,7 +20,7 @@ Marden, J. I. (1996). Analyzing and modeling rank data. CRC Press.
 
 Emond, E. J., & Mason, D. W. (2002). A new rank correlation coefficient with application to the consensus ranking problem. Journal of Multi-Criteria Decision Analysis, 11(1), 17-28.
 
-D'Ambrosio, A. (2008). Tree based methods for data editing and preference rankings. Ph.D. thesis. \url{http://www.fedoa.unina.it/id/eprint/2746}
+D'Ambrosio, A. (2008). Tree based methods for data editing and preference rankings. Ph.D. thesis. \url{https://www.fedoa.unina.it/2746/}
 
 Heiser, W. J., & D'Ambrosio, A. (2013). Clustering and prediction of rankings within a Kemeny distance framework. In Algorithms from and for Nature and Life (pp. 19-31). Springer International Publishing.
 
