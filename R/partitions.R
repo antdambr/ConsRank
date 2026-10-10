@@ -362,12 +362,12 @@ partk<-function(n,k,elements=NULL){
   if(is(elements,"NULL")){elements<-letters[seq(1:n)]}
   
   
-  if(k==1){
+  if (k==length(elements)) { #checked first: with one item k = 1 = n, and no tie mark is needed
+    lista<-matrix(as.character(elements),1,length(elements))
+  } else if(k==1){
     lista<-matrix(elements,1,length(elements))
     lista[1]<-paste("{",lista[1],sep="")
     lista[length(lista)]<-paste(lista[length(lista)],"}",sep="")
-  } else if (k==length(elements)) {
-    lista<-matrix(as.character(elements),1,length(elements))
   } else {
     
     

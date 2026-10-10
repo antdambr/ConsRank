@@ -89,7 +89,7 @@ allranksnew <- function (X){
     nbuckts<-apply(X,1,function(x) length(unique(x))) #buckets for each ranking in X
     sortnbuckts<-sort(nbuckts)
     ordnbuckts<-order(nbuckts)
-    X<-X[ordnbuckts,]
+    X<-X[ordnbuckts, , drop=FALSE] #keep the matrix when X has only one row
     #    walk=c(0,diff(sortnbuckts))
     #    sortnbuckts=c(NA,sort(nbuckts))
   }

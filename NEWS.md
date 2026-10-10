@@ -205,6 +205,12 @@
   the wrong points. The area of each symbol is now proportional to the frequency
   of the ranking (argument `size`), with semi-transparent symbols.
 
+* `univranks()` stopped with an error when the input defined a single ranking or a
+  single partition: a number of items equal to one (`univranks(1)`), a number of
+  buckets equal to one or to the number of items (e.g. `univranks(4, 1)`,
+  `univranks(4, 4)`), or a matrix with one row. `partitions(1, 1)` returned the
+  ordering "{a}" instead of "a". The other results are unchanged.
+
 * Defunct functions: the messages of `EMCons()` and `FASTDECOR()` pointed to
   algorithms that do not exist (`"EM"`, `"fastdecor"`); they now point to
   `consrank(algorithm = "BB")` and `consrank(algorithm = "decor")`.
