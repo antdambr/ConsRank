@@ -42,7 +42,6 @@
 #'
 #' @importFrom proxy dist
 #' @importFrom gtools combinations
-#' @importFrom tidyr crossing
 #' 
 #' @seealso \code{\link{iw_tau_x}} item-weighted tau_x rank correlation coefficient
 #' @seealso \code{\link{kemenyd}} Kemeny distance
@@ -122,7 +121,7 @@ iw_kemenyd <- function(x,y=NULL,w){
     }
     nx <- nrow(x)
     ny <- nrow(y)
-    indice <- data.frame(crossing(1:nx,1:ny))
+    indice <- data.frame(rep(1:nx, each = ny), rep(1:ny, times = nx))
     kx <- matrix(NA,nx,ny)
     for (j in 1:nrow(indice)) {
       kx[indice[j,1],indice[j,2]] <- sum(abs(kemenyscore(x[ indice[j, 1],])-kemenyscore(y[ indice[j, 2],]))*ws_k/2)
@@ -250,7 +249,7 @@ iw_tau_x <- function(x,y=NULL,w){
     }
     nx <- nrow(x)
     ny <- nrow(y)
-    indice <- data.frame(crossing(1:nx,1:ny))
+    indice <- data.frame(rep(1:nx, each = ny), rep(1:ny, times = nx))
     tau <- matrix(NA,nx,ny)
     for (j in 1:nrow(indice)) {
       tau[indice[j,1],indice[j,2]] <- sum(scorematrix(x[ indice[j, 1],])*scorematrix(y[ indice[j, 2],])*ws_k)/(sum(ws_k)-sum(diag(ws_k)))

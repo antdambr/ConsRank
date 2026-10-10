@@ -5,7 +5,7 @@
 #' @param X A n by m data matrix, in which there are n judges and m objects to be judged. Each row is a ranking of the objects which are represented by the columns. If X contains the rankings observed only once, the argument wk can be used. Either X or cij must be given
 #' @param wk Optional: the frequency of each ranking in the data
 #' @param ps If PS=TRUE, on the screen some information about how many branches are processed are displayed.
-#' @param algorithm Specifies the used algorithm. One among "BB", "quick", "fast", "decor" and "BOLT". algorithm="BB" is the default option.
+#' @param algorithm Specifies the used algorithm. One among "BB", "quick", "fast", "decor" and "BOLT". algorithm="BB" is the default option. The name of the algorithm is matched ignoring the case.
 #' @param full Specifies if the median ranking must be searched in the universe of rankings including all the possible ties (full=FALSE) or in the restricted space of full rankings (permutations). full=FALSE is the default option.
 #' @param itermax maximum number of iterations for FAST and DECOR algorithms. itermax=10 is the default option.
 #' @param np For DECOR algorithm only: the number of population individuals. np=15 is the default option.
@@ -137,6 +137,8 @@ consrank <- function(X=NULL, wk=NULL, ps=TRUE, algorithm="BB", full=FALSE, iterm
   
   
   
+  algorithm <- matchalgorithm(algorithm, c("BB", "quick", "fast", "decor", "BOLT"))
+
   # either the data X or the combined input matrix cij (with nj)
   cij <- checkXcij(X, cij, nj, wk)
   cijgiven <- !is.null(cij)
@@ -273,6 +275,22 @@ checkXcij <- function(X, cij, nj, wk = NULL) {
     warning("wk is ignored when cij is given")
   }
   cij
+}
+
+# Matches the name of the algorithm ignoring the case, and gives a clear message
+# for an unknown name. Returns the canonical name
+
+matchalgorithm <- function(algorithm, choices) {
+  if (!is.character(algorithm) || length(algorithm) != 1 || is.na(algorithm)) {
+    stop("algorithm must be a single character string")
+  }
+  k <- match(tolower(algorithm), tolower(choices))
+  if (is.na(k)) {
+    stop("algorithm must be one of ",
+         paste0("\"", choices, "\"", collapse = ", "),
+         " (upper or lower case)")
+  }
+  choices[k]
 }
 
 #---------------------------------------------------------------------------------------------------------------------

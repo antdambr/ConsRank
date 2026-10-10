@@ -9,6 +9,18 @@ bolt_otpb_impl <- function(r, cij, nb, tol) {
     .Call(`_ConsRank_bolt_otpb_impl`, r, cij, nb, tol)
 }
 
+bolt_otpat_impl <- function(r, cij, sizes, tol) {
+    .Call(`_ConsRank_bolt_otpat_impl`, r, cij, sizes, tol)
+}
+
+bolt_ls_pat_impl <- function(r, cij, tol) {
+    .Call(`_ConsRank_bolt_ls_pat_impl`, r, cij, tol)
+}
+
+bolt_run_pat_impl <- function(seeds, cij, sizes, tol) {
+    .Call(`_ConsRank_bolt_run_pat_impl`, seeds, cij, sizes, tol)
+}
+
 bolt_run_impl <- function(seeds, cij, full, otp, tol) {
     .Call(`_ConsRank_bolt_run_impl`, seeds, cij, full, otp, tol)
 }

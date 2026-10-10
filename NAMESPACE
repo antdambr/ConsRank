@@ -47,5 +47,4 @@ importFrom(rlist,
   list.rbind
 )
 importFrom(stats,runif)
-importFrom(tidyr,crossing)
 useDynLib(ConsRank, .registration = TRUE)

@@ -64,6 +64,22 @@
   partition and a local search that keeps the number of buckets are alternated
   until no improvement. Deterministic; option `maxjudges` as in `bolt()`.
 
+* New argument `bucketsizes` in `mcbo()`: the consensus bucket order can be
+  constrained by a pattern of bucket sizes instead of their number only. One
+  element per bucket, a whole number greater than zero prescribing the size of
+  that bucket and NA leaving it free; when the sizes given do not use all the
+  objects and no NA is present, one free bucket is added at the end. The pattern
+  contains as special cases the full rankings (a pattern of ones), the bucket
+  orders with a given number of buckets (a pattern of NAs, which reproduces
+  exactly `nbuckets` with `algorithm = "BOLT"`), the solution with all the
+  objects tied (one bucket) and the top-k lists (k ones and a free bucket).
+  It is handled by `algorithm = "BOLT"`, which is used by default when
+  bucketsizes is given: for a fixed order of the objects the partition following
+  the pattern is computed exactly by dynamic programming (one admissible cut
+  where a size is prescribed, all of them where it is free), and the local search
+  moves one object to another bucket making one object cross each boundary in
+  between, so that every bucket keeps its size.
+
 ## Changes
 
 * `mcbo(algorithm = "quick")` is now deterministic, more accurate and faster;
@@ -114,6 +130,31 @@
   When `X` is given, the number of objects is the number of columns of `X` and
   `nobj` is ignored (with a warning if it is different); with more than 4 objects
   the function stops, because the polytope cannot be visualized.
+
+* The package does not depend on `tidyr` any more. The only use of it was
+  `tidyr::crossing()`, which built the table of all pairs of rankings in
+  `iw_kemenyd()` and `iw_tau_x()` when two sets of rankings are compared; it is
+  now built with base R. The results are unchanged. This removes `tidyr` and the
+  packages it loads (including `vctrs`, `cli` and `rlang`) from the dependencies
+  of ConsRank.
+
+* The name of the algorithm of `consrank()` and `mcbo()` is now matched ignoring
+  the case, so that `algorithm = "bolt"` and `algorithm = "BOLT"` are the same, and
+  an unknown name gives a clear error message listing the available algorithms.
+  Before, a name written with a different case, or a misspelled one, stopped with
+  the message "object 'out' not found".
+
+* `bolt()`, `consrank(algorithm = "BOLT")` and `mcbo(algorithm = "BOLT")` are faster
+  and use less memory, with exactly the same results. Two changes: (1) the insertion
+  local search rebuilt the order of the objects for every object of a sweep, and now
+  rebuilds it only after an accepted move, because the solution does not change
+  otherwise; (2) the matrices of the differences and of the sums of the combined input
+  matrix are not built any more, so two n by n matrices less are allocated. The local
+  search works directly on the combined input matrix, through the identity
+  N(S) = constant - 2 * sum of c_ji over the ordered pairs of objects for which i is
+  in an earlier bucket than j, the pairs of tied objects contributing only to the
+  constant. On simulated data with 20 judges, the time goes from 3.4 to 0.9 seconds
+  with 500 objects and from 14.6 to 4.0 seconds with 1000 objects.
 
 ## Bug fixes
 

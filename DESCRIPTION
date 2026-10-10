@@ -15,7 +15,6 @@ Imports:
     methods, 
     proxy, 
     gtools, 
-    tidyr, 
     Rcpp
 Suggests:
     rgl,

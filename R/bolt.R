@@ -159,6 +159,65 @@ boltcijbuckets <- function(cij, nb, nj, seeds = NULL, ps = FALSE) {
   list(Consensus = cons, Tau = if (nrow(cons) == 1) tau else matrix(tau, ncol = 1))
 }
 
+
+# Checks the pattern of bucket sizes and returns it in standard form: one
+# element per bucket, a positive whole number where the size is prescribed and
+# NA where it is free. A pattern whose given sizes do not use all the objects
+# gets one free bucket at the end, so that c(1, 1, 1) with ten objects means
+# three buckets of one object and a fourth one with the remaining seven
+
+checkbucketsizes <- function(bucketsizes, N) {
+
+  s <- bucketsizes
+  if (is.logical(s) && all(is.na(s))) s <- as.numeric(s)   # rep(NA, b) is logical
+  if (!is.numeric(s) || length(s) < 1) {
+    stop("bucketsizes must be a numeric vector with one element per bucket")
+  }
+  given <- s[!is.na(s)]
+  if (length(given) && (any(given != round(given)) || any(given < 1))) {
+    stop("the sizes in bucketsizes must be whole numbers greater than zero, or NA for a free size")
+  }
+  s <- as.integer(round(s))
+  if (sum(is.na(s)) == 0 && sum(s) < N) {
+    s <- c(s, NA_integer_)                       # one free bucket takes the rest
+  }
+  nfree <- sum(is.na(s))                         # buckets whose size is free
+  tot <- sum(s, na.rm = TRUE)                    # objects already assigned
+  if (length(s) > N) {
+    stop("bucketsizes cannot ask for more buckets than the number of objects (", N, ")")
+  }
+  if (tot + nfree > N) {
+    stop("bucketsizes asks for more objects than there are (", N, ")")
+  }
+  if (nfree == 0 && tot != N) {
+    stop("the sizes in bucketsizes must sum to the number of objects (", N, ")")
+  }
+  s
+}
+
+# BOLT for the median bucket order whose bucket sizes follow a pattern
+# (internal, used by mcbo): same structure as boltcijbuckets, with the pattern
+# in place of the number of buckets
+
+boltcijpattern <- function(cij, sizes, nj, seeds = NULL, ps = FALSE) {
+
+  N <- ncol(cij)
+  S <- boltseeds(cij, seeds, full = FALSE)
+  tol <- 1e-10 * max(1, sum(abs(cij)))
+  res <- bolt_run_pat_impl(t(S), cij, as.integer(sizes), tol)
+  if (all(!is.finite(res$value))) {
+    stop("no bucket order satisfies bucketsizes")
+  }
+  top <- which(res$value >= max(res$value) - tol)
+  cons <- unique(reordering(t(res$rankings[, top, drop = FALSE])))
+  tau <- bolt_obj_impl(t(cons), cij) / (nj * N * (N - 1))
+  if (ps) {
+    message("BOLT: ", nrow(S), " starting solutions, ", nrow(cons),
+            " solution(s) with Tau = ", round(max(tau), 5))
+  }
+  list(Consensus = cons, Tau = if (nrow(cons) == 1) tau else matrix(tau, ncol = 1))
+}
+
 # starting solutions: computed from cij, given by the user (seeds) and four
 # perturbations of the best of them; one in each row, dense rankings
 boltseeds <- function(cij, seeds = NULL, full = FALSE) {

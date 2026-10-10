@@ -6,7 +6,7 @@
 \usage{
 mcbo(
   X = NULL,
-  nbuckets,
+  nbuckets = NULL,
   wk = NULL,
   ps = TRUE,
   algorithm = "BB",
@@ -18,7 +18,8 @@ mcbo(
   use_cpp = TRUE,
   maxjudges = Inf,
   cij = NULL,
-  nj = NULL
+  nj = NULL,
+  bucketsizes = NULL
 )
 }
 \arguments{
@@ -26,8 +27,9 @@ mcbo(
 Each row is a ranking of the objects which are represented by the columns. 
 If X contains the rankings observed only once, the argument wk can be used}
 
-\item{nbuckets}{Integer. The number of buckets (tied groups) the consensus ranking 
-must contain. Must be between 2 and M-1 (where M is the number of objects)}
+\item{nbuckets}{Integer. The number of buckets (tied groups) the consensus ranking
+must contain. Must be between 2 and M-1 (where M is the number of objects).
+Either nbuckets or bucketsizes must be given}
 
 \item{wk}{Optional: the frequency of each ranking in the data}
 
@@ -40,7 +42,8 @@ must contain. Must be between 2 and M-1 (where M is the number of objects)}
   \item "decor" - Differential Evolution (metaheuristic). Best for M > 50
   \item "BOLT" - BOLT adapted to the bucket constraint (deterministic heuristic,
     see Details). Works with a very large number of objects
-}}
+}
+The name of the algorithm is matched ignoring the case}
 
 \item{itermax}{Integer. For "quick": maximum number of insertion passes (the
 algorithm stops earlier when a pass does not improve the solution). For "decor":
@@ -69,6 +72,17 @@ judges are not used as starting solutions by "BOLT"}
 
 \item{nj}{The number of judges (the sum of the weights, if any) that produced cij.
 Required when cij is given: it is used to compute the averaged TauX}
+
+\item{bucketsizes}{Optional pattern of bucket sizes, one element per bucket: a
+whole number greater than zero prescribes the size of that bucket, NA leaves
+it free. If the sizes given do not use all the objects and no NA is present,
+one free bucket is added at the end, so that with ten objects
+\code{bucketsizes = c(1, 1, 1)} means three buckets of one object and a
+fourth one with the remaining seven, that is a top-3 list. A pattern of ones
+is a full ranking, a pattern of NAs is the plain constrained bucket order of
+nbuckets buckets, and a single bucket is the solution with all the objects
+tied. Available with algorithm = "BOLT" only, which is used by default when
+bucketsizes is given}
 }
 \value{
 A list containing the following components:

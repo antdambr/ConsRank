@@ -7,8 +7,19 @@
 #' @param X A N by M data matrix, in which there are N judges and M objects to be judged. Either X or cij must be given. 
 #'   Each row is a ranking of the objects which are represented by the columns. 
 #'   If X contains the rankings observed only once, the argument wk can be used
-#' @param nbuckets Integer. The number of buckets (tied groups) the consensus ranking 
-#'   must contain. Must be between 2 and M-1 (where M is the number of objects)
+#' @param nbuckets Integer. The number of buckets (tied groups) the consensus ranking
+#'   must contain. Must be between 2 and M-1 (where M is the number of objects).
+#'   Either nbuckets or bucketsizes must be given
+#' @param bucketsizes Optional pattern of bucket sizes, one element per bucket: a
+#'   whole number greater than zero prescribes the size of that bucket, NA leaves
+#'   it free. If the sizes given do not use all the objects and no NA is present,
+#'   one free bucket is added at the end, so that with ten objects
+#'   \code{bucketsizes = c(1, 1, 1)} means three buckets of one object and a
+#'   fourth one with the remaining seven, that is a top-3 list. A pattern of ones
+#'   is a full ranking, a pattern of NAs is the plain constrained bucket order of
+#'   nbuckets buckets, and a single bucket is the solution with all the objects
+#'   tied. Available with algorithm = "BOLT" only, which is used by default when
+#'   bucketsizes is given
 #' @param wk Optional: the frequency of each ranking in the data
 #' @param ps Logical. If TRUE, displays progress information on screen. Default TRUE
 #' @param algorithm Character string specifying the algorithm to use. One of:
@@ -19,6 +30,7 @@
 #'     \item "BOLT" - BOLT adapted to the bucket constraint (deterministic heuristic,
 #'       see Details). Works with a very large number of objects
 #'   }
+#'   The name of the algorithm is matched ignoring the case
 #' @param itermax Integer. For "quick": maximum number of insertion passes (the
 #'   algorithm stops earlier when a pass does not improve the solution). For "decor":
 #'   number of runs of the algorithm. Default 10
@@ -150,14 +162,17 @@
 #'
 #' @export
 
-mcbo <- function(X = NULL, nbuckets, wk = NULL, ps = TRUE, 
+mcbo <- function(X = NULL, nbuckets = NULL, wk = NULL, ps = TRUE, 
                  algorithm = "BB", itermax = 10,
                  np = 10, gl = 100, ff = 0.4, cr = 0.8,
-                 use_cpp = TRUE, maxjudges = Inf, cij = NULL, nj = NULL) {
+                 use_cpp = TRUE, maxjudges = Inf, cij = NULL, nj = NULL,
+                 bucketsizes = NULL) {
   
   # ══════════════════════════════════════════════════════════════════════════
   # 1. INPUT VALIDATION
   # ══════════════════════════════════════════════════════════════════════════
+  algorithm <- matchalgorithm(algorithm, c("BB", "quick", "decor", "BOLT"))
+
   
   # either the data X or the combined input matrix cij (with nj)
   cij <- checkXcij(X, cij, nj, wk)
@@ -179,8 +194,26 @@ mcbo <- function(X = NULL, nbuckets, wk = NULL, ps = TRUE,
   }
   
   # Validation checks
-  if (nbuckets < 2) stop("nbuckets must be at least 2")
-  if (nbuckets >= N) stop(paste0("nbuckets must be less than N (", N, ")"))
+  # the solution is constrained either by the number of buckets or by a pattern
+  # of bucket sizes; with a pattern the number of buckets is its length
+  patgiven <- !is.null(bucketsizes)
+  if (patgiven) {
+    bucketsizes <- checkbucketsizes(bucketsizes, N)
+    if (!is.null(nbuckets) && nbuckets != length(bucketsizes)) {
+      stop("nbuckets (", nbuckets, ") and the length of bucketsizes (",
+           length(bucketsizes), ") disagree")
+    }
+    nbuckets <- length(bucketsizes)
+    if (!"algorithm" %in% names(match.call())) {
+      algorithm <- "BOLT"                 # the pattern is handled by BOLT only
+    } else if (algorithm != "BOLT") {
+      stop("bucketsizes is available with algorithm = \"BOLT\" only")
+    }
+  } else {
+    if (is.null(nbuckets)) stop("either nbuckets or bucketsizes must be given")
+    if (nbuckets < 2) stop("nbuckets must be at least 2")
+    if (nbuckets >= N) stop(paste0("nbuckets must be less than N (", N, ")"))
+  }
   
   valid_algorithms <- c("BB", "quick", "decor", "BOLT")
   if (!algorithm %in% valid_algorithms) {
@@ -232,9 +265,13 @@ mcbo <- function(X = NULL, nbuckets, wk = NULL, ps = TRUE,
                          use_cpp = use_cpp)
     
   } else if (algorithm == "BOLT") {
-    out <- boltcijbuckets(cij, nbuckets, nj,
-                          seeds = if (cijgiven) NULL else boltjudges(X, wk, maxjudges),
-                          ps = ps)
+    # the starting solutions taken from the judges are the same in both cases
+    seedsarg <- if (cijgiven) NULL else boltjudges(X, wk, maxjudges)
+    out <- if (patgiven) {
+      boltcijpattern(cij, bucketsizes, nj, seeds = seedsarg, ps = ps)
+    } else {
+      boltcijbuckets(cij, nbuckets, nj, seeds = seedsarg, ps = ps)
+    }
     colnames(out$Consensus) <- colnames(X)
     
   } else if (algorithm == "decor") {
