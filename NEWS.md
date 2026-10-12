@@ -88,6 +88,17 @@
   `mcbo(..., bucketsizes = rep(1, k), algorithm = "BOLT")`, with the same
   results; the output also contains `TopK`, the names of the k objects in order.
 
+* New function `readpreflib()`: reads a data file of PrefLib (www.preflib.org),
+  from a local file or a URL, and returns the rankings in the format of the
+  package (one row per distinct ranking, one column per object named after the
+  alternative, positions 1, 2, 3, ... without gaps) with their frequencies `wk`.
+  It reads strict and tied orders, complete and incomplete (soc, soi, toc, toi),
+  and categorical preferences (cat: the categories become the buckets, empty
+  categories are skipped). The objects not ranked by a judge are tied in the last
+  position (`unranked = "last"`, as in the files that PrefLib obtains by adding the
+  unranked alternatives at the bottom) or left missing (`unranked = "na"`);
+  rankings that become equal are merged. `expand = TRUE` gives one row per judge.
+
 ## Changes
 
 * `mcbo()` accepts `nbuckets` equal to the number of objects: the solution is

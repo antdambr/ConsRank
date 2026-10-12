@@ -6,7 +6,7 @@
 Median Ranking Approach According to the Kemeny's Axiomatic Approach
 }
 \description{
-Compute the median ranking according to the Kemeny's axiomatic approach. Rankings can or cannot contain ties, rankings can be both complete or incomplete. The package contains both branch-and-bound and heuristic solutions, including the deterministic BOLT algorithm (\code{\link{bolt}}), as well as routines for computing the median constrained bucket order, with a given number of buckets or a given pattern of bucket sizes (\code{\link{mcbo}}), and the median top-k list (\code{\link{consranktopk}}). The package also contains routines for visualizing rankings and for detecting the universe of rankings including ties.
+Compute the median ranking according to the Kemeny's axiomatic approach. Rankings can or cannot contain ties, rankings can be both complete or incomplete. The package contains both branch-and-bound and heuristic solutions, including the deterministic BOLT algorithm (\code{\link{bolt}}), as well as routines for computing the median constrained bucket order, with a given number of buckets or a given pattern of bucket sizes (\code{\link{mcbo}}), and the median top-k list (\code{\link{consranktopk}}). The package also contains routines for visualizing rankings, for detecting the universe of rankings including ties, and for reading the data files of PrefLib (\code{\link{readpreflib}}).
 }
 \author{
 Antonio D'Ambrosio [cre,aut] <antdambr@unina.it>, Sonia Amodio <sonia.amodio@unina.it> [ctb], Giulio Mazzeo [ctb] <giuliomazzeo@gmail.com>, Alessandro Albano [ctb], Antonella Plaia [ctb], Maurizio Romano [ctb]
