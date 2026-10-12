@@ -87,6 +87,17 @@
   other objects tied in the last position. It is a shortcut for
   `mcbo(..., bucketsizes = rep(1, k), algorithm = "BOLT")`, with the same
   results; the output also contains `TopK`, the names of the k objects in order.
+  By default (`algorithm = "exact"`) the solution is exact: the agreement of a
+  top-k list with the judges is a constant plus a linear term (column totals of
+  the combined input matrix) plus the Kemeny agreement among the k objects of the
+  list, so the objects that cannot belong to an optimal list are removed by two
+  rules (exchange of an object of the list with one outside it; upper bound
+  against a known list) and the best list of the remaining candidates is found by
+  dynamic programming over their subsets with at most k objects; all the optimal
+  lists are returned (at most 1000). When the candidates are more than `maxcand`
+  (default 22; memory 8 bytes times 2^maxcand), the BOLT solution is returned.
+  The output contains `Exact` (TRUE if certified optimal) and `Candidates`.
+  `algorithm = "BOLT"` gives the BOLT solution only.
 
 * New function `readpreflib()`: reads a data file of PrefLib (www.preflib.org),
   from a local file or a URL, and returns the rankings in the format of the

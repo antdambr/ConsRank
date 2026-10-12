@@ -11,7 +11,9 @@ consranktopk(
   ps = TRUE,
   maxjudges = Inf,
   cij = NULL,
-  nj = NULL
+  nj = NULL,
+  algorithm = c("exact", "BOLT"),
+  maxcand = 22
 )
 }
 \arguments{
@@ -28,8 +30,9 @@ M-1 (with k = M-1 the top-k list is a full ranking)}
 \item{ps}{Logical. If TRUE, displays information on screen. Default TRUE}
 
 \item{maxjudges}{Maximum number of distinct rankings of the judges used as
-starting solutions, the most frequent first. Default Inf (all of them);
-0 uses only the starting solutions computed from the combined input matrix}
+starting solutions by BOLT, the most frequent first. Default Inf (all of
+them); 0 uses only the starting solutions computed from the combined input
+matrix}
 
 \item{cij}{The combined input matrix (M by M, see \code{\link{combinpmatr}}),
 to be given instead of X. With cij, the argument wk is ignored and the
@@ -37,6 +40,16 @@ rankings of the judges are not used as starting solutions}
 
 \item{nj}{The number of judges (the sum of the weights, if any) that produced
 cij. Required when cij is given: it is used to compute the averaged TauX}
+
+\item{algorithm}{\code{"exact"} (default): the exact solution, found by
+dynamic programming on the objects that can belong to an optimal list, when
+they are at most maxcand; otherwise the BOLT solution. \code{"BOLT"}: always
+the BOLT solution, as \code{mcbo(X, bucketsizes = rep(1, k), algorithm =
+"BOLT")}}
+
+\item{maxcand}{The largest number of candidate objects for the exact
+solution (default 22). The memory used grows as 2^maxcand (8 bytes times
+2^maxcand: 32 MB with 22); at most 30}
 }
 \value{
 A list containing the following components:
@@ -46,6 +59,10 @@ A list containing the following components:
   Consensus \tab \tab the consensus ranking(s) of all the objects, with the
   objects outside the top-k list tied in position k+1\cr
   Tau \tab \tab averaged TauX rank correlation coefficient\cr
+  Exact \tab \tab TRUE if the solution is certified optimal, FALSE if it is
+  the BOLT solution\cr
+  Candidates \tab \tab the number of objects that can belong to an optimal
+  list (NA with algorithm = "BOLT")\cr
   Eltime \tab \tab elapsed time in seconds
 }
 }
@@ -54,24 +71,40 @@ Find the median top-k list according to the Kemeny's axiomatic approach: the
 consensus ranking in which k objects are ranked in strict order in the first k
 positions and all the other objects are tied in the last position. It is the
 median constrained bucket order with bucket sizes 1, ..., 1 (k times) and a
-last bucket with the remaining objects, found by the BOLT algorithm (see
-\code{\link{mcbo}} with \code{bucketsizes = rep(1, k)}).
+last bucket with the remaining objects (see \code{\link{mcbo}} with
+\code{bucketsizes = rep(1, k)}). By default the solution is exact whenever
+possible (see Details).
 }
 \details{
-The function is a shortcut for \code{mcbo(X, wk = wk, bucketsizes = rep(1, k),
-algorithm = "BOLT")}: the results are the same. The objects of the top-k list
-are those for which the judges agree most on placing them in front of the
-others, and their order is the one that best agrees with the judges; the
-objects outside the list are tied, so that their mutual order does not matter.
-Like the other functions of the package, the solution maximizes the averaged
-TauX rank correlation coefficient with the rankings of the judges. The
-procedure is deterministic.
+The objects of the top-k list are those for which the judges agree most on
+placing them in front of the others, and their order is the one that best
+agrees with the judges; the objects outside the list are tied, so that their
+mutual order does not matter. Like the other functions of the package, the
+solution maximizes the averaged TauX rank correlation coefficient with the
+rankings of the judges. The procedure is deterministic.
+
+With the combined input matrix C (elements c_ij), the agreement of a top-k
+list with the judges is a constant plus
+\deqn{\sum_{t=1}^{k} g_{a_t} + 2 \sum_{s<t} c_{a_s a_t},}
+where \eqn{a_1, \ldots, a_k} are the objects of the list in order and
+\eqn{g_a = -2 \sum_{j \neq a} c_{ja}} depends only on the column total of
+the object a. With \code{algorithm = "exact"}, the objects that cannot belong
+to an optimal list are first removed, by two rules applied repeatedly: an
+object of an optimal list cannot be improved by replacing it with an object
+outside the list, and the value of a list containing the object, bounded from
+above, must reach the value of a known list. The best list of the remaining
+candidates is then found exactly by dynamic programming over their subsets with
+at most k objects, and all the optimal lists are returned (at most 1000). The
+first rule needs no known list; if the candidates are more than maxcand, the
+BOLT solution is computed and used in the second rule; if they are still more
+than maxcand, the BOLT solution is returned and Exact is FALSE.
 }
 \examples{
 data(EMD)
 CR <- consranktopk(EMD[, 1:15], k = 3, wk = EMD[, 16])
 CR$TopK
 CR$Tau
+CR$Exact
 
 }
 \references{

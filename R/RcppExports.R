@@ -68,3 +68,11 @@ scorematrix_cpp <- function(X) {
     .Call(`_ConsRank_scorematrix_cpp`, X)
 }
 
+topk_cand_impl <- function(cij, k, F0, tol) {
+    .Call(`_ConsRank_topk_cand_impl`, cij, k, F0, tol)
+}
+
+topk_dp_impl <- function(cij, cand, k, tol, maxsol) {
+    .Call(`_ConsRank_topk_dp_impl`, cij, cand, k, tol, maxsol)
+}
+

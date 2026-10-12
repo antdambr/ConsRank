@@ -215,6 +215,35 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// topk_cand_impl
+List topk_cand_impl(NumericMatrix cij, int k, double F0, double tol);
+RcppExport SEXP _ConsRank_topk_cand_impl(SEXP cijSEXP, SEXP kSEXP, SEXP F0SEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type cij(cijSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type F0(F0SEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(topk_cand_impl(cij, k, F0, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
+// topk_dp_impl
+List topk_dp_impl(NumericMatrix cij, IntegerVector cand, int k, double tol, int maxsol);
+RcppExport SEXP _ConsRank_topk_dp_impl(SEXP cijSEXP, SEXP candSEXP, SEXP kSEXP, SEXP tolSEXP, SEXP maxsolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type cij(cijSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type cand(candSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< int >::type maxsol(maxsolSEXP);
+    rcpp_result_gen = Rcpp::wrap(topk_dp_impl(cij, cand, k, tol, maxsol));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ConsRank_bolt_run_b_impl", (DL_FUNC) &_ConsRank_bolt_run_b_impl, 4},
@@ -233,6 +262,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ConsRank_scorematrix_impl", (DL_FUNC) &_ConsRank_scorematrix_impl, 1},
     {"_ConsRank_ReorderingBB_impl", (DL_FUNC) &_ConsRank_ReorderingBB_impl, 1},
     {"_ConsRank_scorematrix_cpp", (DL_FUNC) &_ConsRank_scorematrix_cpp, 1},
+    {"_ConsRank_topk_cand_impl", (DL_FUNC) &_ConsRank_topk_cand_impl, 4},
+    {"_ConsRank_topk_dp_impl", (DL_FUNC) &_ConsRank_topk_dp_impl, 5},
     {NULL, NULL, 0}
 };
 
