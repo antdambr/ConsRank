@@ -65,6 +65,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// bolt_ls_swap_impl
+NumericVector bolt_ls_swap_impl(NumericVector r, NumericMatrix cij, double tol);
+RcppExport SEXP _ConsRank_bolt_ls_swap_impl(SEXP rSEXP, SEXP cijSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type r(rSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type cij(cijSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(bolt_ls_swap_impl(r, cij, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
 // bolt_run_pat_impl
 List bolt_run_pat_impl(NumericMatrix seeds, NumericMatrix cij, IntegerVector sizes, double tol);
 RcppExport SEXP _ConsRank_bolt_run_pat_impl(SEXP seedsSEXP, SEXP cijSEXP, SEXP sizesSEXP, SEXP tolSEXP) {
@@ -250,6 +263,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ConsRank_bolt_otpb_impl", (DL_FUNC) &_ConsRank_bolt_otpb_impl, 4},
     {"_ConsRank_bolt_otpat_impl", (DL_FUNC) &_ConsRank_bolt_otpat_impl, 4},
     {"_ConsRank_bolt_ls_pat_impl", (DL_FUNC) &_ConsRank_bolt_ls_pat_impl, 3},
+    {"_ConsRank_bolt_ls_swap_impl", (DL_FUNC) &_ConsRank_bolt_ls_swap_impl, 3},
     {"_ConsRank_bolt_run_pat_impl", (DL_FUNC) &_ConsRank_bolt_run_pat_impl, 4},
     {"_ConsRank_bolt_run_impl", (DL_FUNC) &_ConsRank_bolt_run_impl, 5},
     {"_ConsRank_bolt_obj_impl", (DL_FUNC) &_ConsRank_bolt_obj_impl, 2},

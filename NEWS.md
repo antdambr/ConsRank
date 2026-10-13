@@ -62,7 +62,14 @@
   O(nbuckets M^2) time; from each starting solution (the same as in `bolt()`) the
   order is improved by the insertion local search without ties, then this optimal
   partition and a local search that keeps the number of buckets are alternated
-  until no improvement. Deterministic; option `maxjudges` as in `bolt()`.
+  until no improvement. The local search has two families of moves: insertion
+  moves that keep the number of buckets, then swaps of two objects of different
+  buckets (the swap keeps every bucket size, so it is legal under any constraint
+  on the buckets and finds improvements that need two objects to move together);
+  the gain of a swap is computed in O(1) from cumulative sums over the buckets.
+  Deterministic; option `maxjudges` as in `bolt()`. `bolt()` and
+  `consrank(algorithm = "BOLT")` do not use the swap moves: their results are
+  those of the BOLT algorithm of Romano, D'Ambrosio and Conversano.
 
 * New argument `bucketsizes` in `mcbo()`: the consensus bucket order can be
   constrained by a pattern of bucket sizes instead of their number only. One
@@ -78,7 +85,9 @@
   the pattern is computed exactly by dynamic programming (one admissible cut
   where a size is prescribed, all of them where it is free), and the local search
   moves one object to another bucket making one object cross each boundary in
-  between, so that every bucket keeps its size. Either `nbuckets` or `bucketsizes`
+  between, so that every bucket keeps its size; when no such move improves, two
+  objects of different buckets exchange their buckets (swap move), and the two
+  families of moves are repeated until no swap improves. Either `nbuckets` or `bucketsizes`
   must be given, not both: to fix the number of buckets of a pattern, NA is used
   for the buckets of free size (e.g. `bucketsizes = c(1, 1, NA, NA, NA)`).
 

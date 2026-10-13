@@ -17,6 +17,10 @@ bolt_ls_pat_impl <- function(r, cij, tol) {
     .Call(`_ConsRank_bolt_ls_pat_impl`, r, cij, tol)
 }
 
+bolt_ls_swap_impl <- function(r, cij, tol) {
+    .Call(`_ConsRank_bolt_ls_swap_impl`, r, cij, tol)
+}
+
 bolt_run_pat_impl <- function(seeds, cij, sizes, tol) {
     .Call(`_ConsRank_bolt_run_pat_impl`, seeds, cij, sizes, tol)
 }

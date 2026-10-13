@@ -478,12 +478,127 @@ void bolt_ls_pat(std::vector<double>& r, const NumericMatrix& cij, double tol) {
     }
   }
 }
+
+// Swap local search: two objects x and y in different buckets exchange their
+// buckets. The sizes of all the buckets, and so their number, do not change,
+// which makes the move legal for a pattern of sizes and for a fixed number of
+// buckets. It finds improvements that need two objects to move together, which
+// the insertion and cascading moves cannot reach.
+// Cost of a solution: sum of c(j, i) over the ordered pairs with i in an
+// earlier bucket than j (tied pairs pay nothing), N(S) = constant - 2 * cost.
+// With U[z][u] = sum of c(z, j) and V[z][u] = sum of c(j, z) over the objects j
+// of bucket u (j different from z), and x in bucket a earlier than y in bucket
+// b, the change of the cost of the swap is
+//   F(x) - F(y) + c(x, y) + c(y, x),
+//   F(z) = sum_{a <= u < b} U[z][u] - sum_{a < u <= b} V[z][u],
+// computed in O(1) from cumulative sums of U and V over the buckets.
+// Every object in turn (in the order of the solution) takes the best swap with
+// an object of another bucket, if it improves; the sweeps are repeated until no
+// swap improves. Returns true when at least one swap was made
+bool bolt_ls_swap(std::vector<double>& r, const NumericMatrix& cij, double tol) {
+  int n = r.size();                                   // number of objects
+  if (n < 2) return false;                            // no pair to swap
+  std::vector<int> ord, lab;                          // objects by bucket, bucket of each position
+  bolt_state(r, ord, lab);                            // built from the rank vector
+  int nb = lab[n - 1] + 1;                            // number of buckets
+  if (nb < 2) return false;                           // one bucket: every swap changes nothing
+  std::vector<int> bk(n);                             // bk[i] = bucket of object i (0 ... nb-1)
+  for (int q = 0; q < n; q++) bk[ord[q]] = lab[q];    // read along the order
+  // sums per bucket, as in bolt_ls_pat
+  std::vector<double> U((size_t)n * nb, 0.0), V((size_t)n * nb, 0.0);
+  for (int z = 0; z < n; z++) {                       // for every object
+    for (int j = 0; j < n; j++) {                     // against every other object
+      if (j == z) continue;                           // the diagonal is not a pair
+      U[(size_t)z * nb + bk[j]] += cij(z, j);         // c(z, j) goes to the bucket of j
+      V[(size_t)z * nb + bk[j]] += cij(j, z);         // c(j, z) goes to the bucket of j
+    }
+  }
+  // cumulative sums over the buckets: PU[z][t] = sum_{u < t} U[z][u], same for PV
+  std::vector<double> PU((size_t)n * (nb + 1)), PV((size_t)n * (nb + 1));
+  auto cumulate = [&](int z) {                        // rebuilds the cumulative sums of z
+    PU[(size_t)z * (nb + 1)] = 0.0;                   // empty sum before the first bucket
+    PV[(size_t)z * (nb + 1)] = 0.0;
+    for (int u = 0; u < nb; u++) {                    // one bucket at a time
+      PU[(size_t)z * (nb + 1) + u + 1] = PU[(size_t)z * (nb + 1) + u] + U[(size_t)z * nb + u];
+      PV[(size_t)z * (nb + 1) + u + 1] = PV[(size_t)z * (nb + 1) + u] + V[(size_t)z * nb + u];
+    }
+  };
+  for (int z = 0; z < n; z++) cumulate(z);            // for every object
+  // F(z) for the pair of buckets a < b, from the cumulative sums
+  auto F = [&](int z, int a, int b) {
+    double su = PU[(size_t)z * (nb + 1) + b] - PU[(size_t)z * (nb + 1) + a];          // U over a ... b-1
+    double sv = PV[(size_t)z * (nb + 1) + b + 1] - PV[(size_t)z * (nb + 1) + a + 1];  // V over a+1 ... b
+    return su - sv;
+  };
+  bool any = false;                                   // a swap was made in some sweep
+  bool improved = true;                               // a swap was made in the current sweep
+  while (improved) {                                  // sweeps until no swap improves
+    improved = false;
+    std::vector<int> items = ord;                     // sweep order fixed at the start of the sweep
+    for (int x : items) {                             // every object looks for its best swap
+      int bx = bk[x];                                 // its bucket
+      double bestgain = 0.0;                          // best increase of N (0 = no swap)
+      int besty = -1;                                 // partner of the best swap
+      for (int y = 0; y < n; y++) {                   // every object of another bucket
+        int by = bk[y];
+        if (by == bx) continue;                       // same bucket: the swap changes nothing
+        // change of the cost, with the object of the earlier bucket first
+        double delta = (bx < by) ? F(x, bx, by) - F(y, bx, by) : F(y, by, bx) - F(x, by, bx);
+        delta += cij(x, y) + cij(y, x);               // the pair x, y itself
+        double gain = -2.0 * delta;                   // change of N
+        if (gain > bestgain + tol) {                  // strictly better than no swap
+          bestgain = gain; besty = y;                 // and than the best swap so far
+        }
+      }
+      if (besty < 0) continue;                        // no improving swap for x
+      int y = besty, by = bk[y];                      // the partner and its bucket
+      for (int z = 0; z < n; z++) {                   // update the sums of every object
+        if (z != x) {                                 // x leaves bucket bx and enters by
+          U[(size_t)z * nb + bx] -= cij(z, x); V[(size_t)z * nb + bx] -= cij(x, z);
+          U[(size_t)z * nb + by] += cij(z, x); V[(size_t)z * nb + by] += cij(x, z);
+        }
+        if (z != y) {                                 // y leaves bucket by and enters bx
+          U[(size_t)z * nb + by] -= cij(z, y); V[(size_t)z * nb + by] -= cij(y, z);
+          U[(size_t)z * nb + bx] += cij(z, y); V[(size_t)z * nb + bx] += cij(y, z);
+        }
+      }
+      for (int z = 0; z < n; z++) cumulate(z);        // cumulative sums of every object
+      bk[x] = by; bk[y] = bx;                         // the two objects exchange their buckets
+      r[x] = by + 1; r[y] = bx + 1;                   // and so in the rank vector
+      improved = true;                                // this sweep changed the solution
+      any = true;
+    }
+    if (improved) {                                   // the next sweep follows the new order
+      bolt_state(r, ord, lab);
+    }
+  }
+  return any;
+}
+
+// Size-preserving local search with both families of moves: cascading moves
+// until none improves, then swaps until none improves, repeated until a round
+// of swaps finds nothing
+void bolt_ls_pat_swap(std::vector<double>& r, const NumericMatrix& cij, double tol) {
+  while (true) {
+    bolt_ls_pat(r, cij, tol);                         // cascading moves
+    if (!bolt_ls_swap(r, cij, tol)) break;            // swaps; stop when none improves
+  }
+}
+
+// Local search keeping the number of buckets with both families of moves:
+// insertion moves of bolt_ls_b, then swaps, repeated until no swap improves
+void bolt_ls_b_swap(std::vector<double>& r, const NumericMatrix& cij, double tol) {
+  while (true) {
+    bolt_ls_b(r, cij, tol);                           // insertion moves keeping the number
+    if (!bolt_ls_swap(r, cij, tol)) break;            // swaps; stop when none improves
+  }
+}
 }  // namespace
 
 // BOLT for the median constrained bucket order (exactly nb buckets): from each
 // seed, strict insertion local search (order only), then alternation of the
-// optimal partition into nb buckets and of the local search keeping nb buckets,
-// until no improvement
+// optimal partition into nb buckets and of the local search keeping nb buckets
+// (insertion moves and swaps), until no improvement
 // [[Rcpp::export]]
 List bolt_run_b_impl(NumericMatrix seeds, NumericMatrix cij, int nb, double tol) {
   int n = cij.nrow(), S = seeds.ncol();
@@ -497,7 +612,7 @@ List bolt_run_b_impl(NumericMatrix seeds, NumericMatrix cij, int nb, double tol)
     double v = R_NegInf;
     while (true) {
       std::vector<double> b = bolt_otpb(r, cij, nb, tol);
-      bolt_ls_b(b, cij, tol);
+      bolt_ls_b_swap(b, cij, tol);              // insertion moves and swaps (since 3.1)
       double vb = bolt_obj(b, cij);
       if (!(vb > v + tol)) break;
       r = b; v = vb;
@@ -541,6 +656,15 @@ NumericVector bolt_ls_pat_impl(NumericVector r, NumericMatrix cij, double tol) {
   return wrap(rr);
 }
 
+// Swap local search, exported for the tests: takes a rank vector and returns
+// the rank vector of the local optimum with respect to the swaps
+// [[Rcpp::export]]
+NumericVector bolt_ls_swap_impl(NumericVector r, NumericMatrix cij, double tol) {
+  std::vector<double> rr(r.begin(), r.end());
+  bolt_ls_swap(rr, cij, tol);
+  return wrap(rr);
+}
+
 // BOLT for a bucket order whose bucket sizes follow a pattern. From each
 // starting solution: the strict insertion local search looks for a good order
 // of the objects (the pattern plays no role here, the order is all that
@@ -568,9 +692,10 @@ List bolt_run_pat_impl(NumericMatrix seeds, NumericMatrix cij,
     while (true) {                              // alternate the two steps
       std::vector<double> b = bolt_otpat(r, cij, sz, tol);   // cut the order following the pattern
       if (b.empty()) break;                     // no partition satisfies the pattern: give up
-      if (allfree) bolt_ls_b(b, cij, tol);      // no size prescribed: keep only their number,
-      else bolt_ls_pat(b, cij, tol);            // so that the plain constrained bucket order
+      if (allfree) bolt_ls_b_swap(b, cij, tol); // no size prescribed: keep only their number,
+      else bolt_ls_pat_swap(b, cij, tol);       // so that the plain constrained bucket order
                                                 // is reproduced exactly; otherwise keep the sizes
+                                                // (both with the swap moves)
       double vb = bolt_obj(b, cij);             // value of the solution just obtained
       if (!(vb > v + tol)) break;               // no improvement: this start is finished
       r = b; v = vb;                            // otherwise keep it and try again

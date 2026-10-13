@@ -115,7 +115,11 @@
 #' local search without ties; then the optimal partition into \code{nbuckets}
 #' buckets and a local search that keeps the number of buckets (an object alone
 #' in its bucket is moved to another position, an object of a larger bucket is
-#' moved into another bucket) are alternated until no improvement. The procedure
+#' moved into another bucket; then two objects of different buckets exchange
+#' their buckets) are alternated until no improvement. With \code{bucketsizes},
+#' the local search keeps the size of every bucket: an object moves to another
+#' bucket and one object crosses each boundary in between, and two objects of
+#' different buckets exchange their buckets. The procedure
 #' is deterministic: repeated runs return the same solution(s), and the argument
 #' \code{itermax} is not used.
 #'
