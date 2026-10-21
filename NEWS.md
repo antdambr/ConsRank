@@ -206,6 +206,14 @@
 
 ## Bug fixes
 
+* `consrank()` with a single judge: with `algorithm = "BB"` and `full = TRUE`
+  the TauX returned was 0 instead of 1; with `algorithm = "decor"` the function
+  stopped with the error "object 'Consensus' not found". With `full = TRUE` and
+  a judge's ranking with ties, all the algorithms (also `bolt()`) returned that
+  ranking, which is not a full ranking: now the ties are broken in the order of
+  the columns (every full ranking compatible with the judge's ranking is a
+  median ranking) and its TauX is returned. Results with two or more judges do
+  not change.
 * `mcbo(algorithm = "decor")`: when several individuals of the initial
   population had the same best cost, the stored best individuals were shifted
   with respect to their costs, so that the solution returned could differ from

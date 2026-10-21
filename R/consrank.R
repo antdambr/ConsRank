@@ -248,6 +248,22 @@ cleancij <- function(cij) {
   cij
 }
 
+# Median ranking of a single judge (X with one row): the ranking itself, with
+# TauX = 1. When the median must be a full ranking (full = TRUE) and the judge
+# has ties, every full ranking compatible with the judge's ranking is a median
+# ranking (each tied pair costs the same in either order): the ties are broken
+# in the order of the columns and TauX is computed.
+
+onejudge <- function(X, full) {
+  if (full && any(duplicated(X[1, ]))) {                     # ties not allowed in the median
+    cons <- matrix(rank(X[1, ], ties.method = "first"), nrow = 1,
+                   dimnames = list(NULL, colnames(X)))       # ties broken in column order
+    list(consensus = cons, tau = as.numeric(tau_x(cons, X))) # TauX of this full ranking
+  } else {
+    list(consensus = X, tau = 1)                             # the ranking itself
+  }
+}
+
 # Checks the input of consrank, mcbo and bolt: either the data X or the combined
 # input matrix cij, with nj the number of judges. Returns cij (NULL if X is given)
 
@@ -1512,10 +1528,11 @@ QuickConsn <- function(X,Wk=NULL, FULL=FALSE,PS=FALSE, use_cpp=TRUE, cij=NULL, n
   tic <- proc.time()[3]
   
   if (M==1 && !cijgiven) {
-    
-    consensus <- X
-    Taux <- 1
-    
+
+    OJ <- onejudge(X, FULL) #single judge (ties broken if FULL)
+    consensus <- OJ$consensus
+    Taux <- OJ$tau
+
   } else {
     if (!cijgiven) {
       if (!is(Wk,"NULL")) {
@@ -1635,8 +1652,9 @@ FASTconsn <- function(X, Wk=NULL, maxiter=50, FULL=FALSE, PS=FALSE, use_cpp=TRUE
   
   tic <- proc.time()[3]
   if (M==1 && !cijgiven) {
-    CR <- X
-    Taux <- 1
+    OJ <- onejudge(X, FULL) #single judge (ties broken if FULL)
+    CR <- OJ$consensus
+    Taux <- OJ$tau
     colnames(CR) <- colnames(X)
   } else {
     if (!cijgiven) {
@@ -2179,10 +2197,11 @@ FASTDECORn <- function(X,Wk=NULL,maxiter=10,NP=15,L=100,FF=0.4,CR=0.9,FULL=FALSE
   
   #check if there are trivial solutions
   
-  if (M==1 && !cijgiven) { 
-    consensus <- X
-    TauX <- 1
-    colnames(consensus)<-colnames(X)
+  if (M==1 && !cijgiven) {
+    OJ <- onejudge(X, FULL) #single judge (ties broken if FULL)
+    Consensus <- OJ$consensus #was assigned to 'consensus', so the return failed
+    TauX <- OJ$tau
+    colnames(Consensus)<-colnames(X)
     
   } else {
     
@@ -2500,9 +2519,11 @@ BBFULLn <- function(X,Wk=NULL,PS=TRUE,use_cpp=TRUE, cij=NULL, nj=NULL)  {
     N<-ncol(X)
   }
   tic <- proc.time()[3]
-  if (M==1 && !cijgiven) {
-    consensus <- X
-    TauX <- 1
+  onej <- M==1 && !cijgiven #single judge
+  if (onej) {
+    OJ <- onejudge(X, TRUE) #the median is a full ranking (ties broken)
+    consensus <- OJ$consensus
+    TauX <- OJ$tau
   } else {
     if (!cijgiven) {
       if (!is.null(Wk)) {
@@ -2535,36 +2556,41 @@ BBFULLn <- function(X,Wk=NULL,PS=TRUE,use_cpp=TRUE, cij=NULL, nj=NULL)  {
     Po<-cons1$pen
     consensus<-BBconsensus2(consensus1,cij,Po,PS,FULL=TRUE,use_cpp=use_cpp)
   }
-  
-  
-  if (nrow(consensus)==1) {
-    
+
+
+  if (onej) {
+
+    # single judge: TauX already computed (cij does not exist; recomputing it
+    # here gave TauX = 0)
+
+  } else if (nrow(consensus)==1) {
+
     Sij<-scorematrix(consensus, use_cpp=use_cpp)
-    
+
     if (!is(Wk,"NULL")){
       TauX<-sum(cij*Sij) / ( sum(Wk)* (N*(N-1)) )
     } else {
       TauX<-sum(cij*Sij) / (  M*(N*(N-1)) )
     }
-    
+
   } else {
-    
+
     TauX<-matrix(0,nrow(consensus),1)
-    
+
     for (k in 1:nrow(consensus)) {
-      
+
       Sij<-scorematrix(t(matrix(consensus[k,])), use_cpp=use_cpp)
-      
+
       if (!is(Wk,"NULL")) {
-        
+
         TauX[k,1] <- sum(cij*Sij) / ( sum(Wk)*(N*(N-1)) )
-        
+
       } else {
-        
+
         TauX[k,1] <- sum(cij*Sij) / (M*(N*(N-1)))
-        
+
       }
-      
+
     }
     
   }

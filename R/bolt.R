@@ -102,7 +102,8 @@ bolt <- function(X = NULL, wk = NULL, full = FALSE, otp = TRUE, maxjudges = Inf,
   N <- ncol(X)
 
   if (nrow(X) == 1) {
-    return(list(Consensus = reordering(X), Tau = 1, Eltime = proc.time()[3] - tic))
+    OJ <- onejudge(X, full)  # single judge (ties broken if full = TRUE)
+    return(list(Consensus = reordering(OJ$consensus), Tau = OJ$tau, Eltime = proc.time()[3] - tic))
   }
   if (!is.null(wk)) {
     wk <- as.numeric(wk)
