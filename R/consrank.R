@@ -374,7 +374,7 @@ EMConsn <- function(X,Wk=NULL,PS=TRUE,use_cpp=TRUE, cij=NULL, nj=NULL)  {
     
     ##some adjustment made on march 2023
     if (sum(cij==0)==length(cij)){
-      print("Combined Input Matrix contains only zeros: any ranking in the reference universe is a median ranking. The output contains the identity permutation")
+      message("Combined Input Matrix contains only zeros: any ranking in the reference universe is a median ranking. The output contains the identity permutation")
       cr <- matrix(seq(1:N),nrow=1)
       colnames(cr) <- colnames(X)
       return(list(Consensus=cr, Tau=0, Eltime=NA))
@@ -382,7 +382,7 @@ EMConsn <- function(X,Wk=NULL,PS=TRUE,use_cpp=TRUE, cij=NULL, nj=NULL)  {
     } 
     
     if (sum(sign(cij+diag(N)))==length(cij)){
-      print("Combined Input Matrix contains only positive values: the median ranking is the all-tie solution")
+      message("Combined Input Matrix contains only positive values: the median ranking is the all-tie solution")
       cr <- matrix(rep(1,N), nrow=1)
       
       Sij <-scorematrix(cr,use_cpp=use_cpp) 
@@ -1552,7 +1552,7 @@ QuickConsn <- function(X,Wk=NULL, FULL=FALSE,PS=FALSE, use_cpp=TRUE, cij=NULL, n
     
     ##some adjustment made on march 2023
     if (sum(cij==0)==length(cij)){
-      print("Combined Input Matrix contains only zeros: any ranking in the reference universe is a median ranking. The output contains the identity permutation")
+      message("Combined Input Matrix contains only zeros: any ranking in the reference universe is a median ranking. The output contains the identity permutation")
       cr <- matrix(seq(1:N),nrow=1)
       colnames(cr) <- colnames(X)
       return(list(Consensus=cr, Tau=0, Eltime=NA))
@@ -1563,7 +1563,7 @@ QuickConsn <- function(X,Wk=NULL, FULL=FALSE,PS=FALSE, use_cpp=TRUE, cij=NULL, n
       
       
       if (sum(sign(cij+diag(N)))==length(cij)){
-        print("Combined Input Matrix contains only positive values: the median ranking is the all-tie solution")
+        message("Combined Input Matrix contains only positive values: the median ranking is the all-tie solution")
         cr <- matrix(rep(1,N), nrow=1)
         
         Sij <-scorematrix(cr, use_cpp=use_cpp)
@@ -1675,7 +1675,7 @@ FASTconsn <- function(X, Wk=NULL, maxiter=50, FULL=FALSE, PS=FALSE, use_cpp=TRUE
     
     ##some adjustment made on march 2023
     if (sum(cij==0)==length(cij)){
-      print("Combined Input Matrix contains only zeros: any ranking in the reference universe is a median ranking. The output contains the identity permutation")
+      message("Combined Input Matrix contains only zeros: any ranking in the reference universe is a median ranking. The output contains the identity permutation")
       cr <- matrix(seq(1:N),nrow=1)
       colnames(cr) <- colnames(X)
       return(list(Consensus=cr, Tau=0, Eltime=NA))
@@ -1686,7 +1686,7 @@ FASTconsn <- function(X, Wk=NULL, maxiter=50, FULL=FALSE, PS=FALSE, use_cpp=TRUE
       
       
       if (sum(sign(cij+diag(N)))==length(cij)){
-        print("Combined Input Matrix contains only positive values: the median ranking is the all-tie solution")
+        message("Combined Input Matrix contains only positive values: the median ranking is the all-tie solution")
         cr <- matrix(rep(1,N), nrow=1)
         
         Sij <-scorematrix(cr, use_cpp=use_cpp)
@@ -1806,7 +1806,7 @@ DECOR <- function(X,Wk=NULL,NP=15,L=100,FF=0.4,CR=0.9,FULL=FALSE, use_cpp=TRUE) 
     
     ##some adjustment made on march
     if (sum(cij==0)==length(cij)){
-      print("Combined Input Matrix contains only zeros: any ranking in the reference universe is a median ranking. The output contains the identity permutation")
+      message("Combined Input Matrix contains only zeros: any ranking in the reference universe is a median ranking. The output contains the identity permutation")
       cr <- matrix(seq(1:N),nrow=1)
       colnames(cr) <- colnames(X)
       return(list(Consensus=cr, Tau=0, Eltime=NA))
@@ -1817,7 +1817,7 @@ DECOR <- function(X,Wk=NULL,NP=15,L=100,FF=0.4,CR=0.9,FULL=FALSE, use_cpp=TRUE) 
       
       
       if (sum(sign(cij+diag(N)))==length(cij)){
-        print("Combined Input Matrix contains only positive values: the median ranking is the all-tie solution")
+        message("Combined Input Matrix contains only positive values: the median ranking is the all-tie solution")
         cr <- matrix(rep(1,N), nrow=1)
         
         Sij <-scorematrix(cr, use_cpp=use_cpp)
@@ -2225,7 +2225,7 @@ FASTDECORn <- function(X,Wk=NULL,maxiter=10,NP=15,L=100,FF=0.4,CR=0.9,FULL=FALSE
     
     ##some adjustment made on march
     if (sum(cij==0)==length(cij)){
-      print("Combined Input Matrix contains only zeros: any ranking in the reference universe is a median ranking. The output contains the identity permutation")
+      message("Combined Input Matrix contains only zeros: any ranking in the reference universe is a median ranking. The output contains the identity permutation")
       cr <- matrix(seq(1:N),nrow=1)
       colnames(cr) <- colnames(X)
       return(list(Consensus=cr, Tau=0, Eltime=NA))
@@ -2236,7 +2236,7 @@ FASTDECORn <- function(X,Wk=NULL,maxiter=10,NP=15,L=100,FF=0.4,CR=0.9,FULL=FALSE
       
       
       if (sum(sign(cij+diag(N)))==length(cij)){
-        print("Combined Input Matrix contains only positive values: the median ranking is the all-tie solution")
+        message("Combined Input Matrix contains only positive values: the median ranking is the all-tie solution")
         cr <- matrix(rep(1,N), nrow=1)
         
         Sij <-scorematrix(cr, use_cpp=use_cpp)
@@ -2543,7 +2543,7 @@ BBFULLn <- function(X,Wk=NULL,PS=TRUE,use_cpp=TRUE, cij=NULL, nj=NULL)  {
     
     if (sum(cij==0)==nrow(cij)^2){
       
-      print("Combined Input Matrix contains only zeros: any ranking in the reference universe is a median ranking. The output contains the identity permutation")
+      message("Combined Input Matrix contains only zeros: any ranking in the reference universe is a median ranking. The output contains the identity permutation")
       cr <- matrix(seq(1:N),nrow=1)
       colnames(cr) <- colnames(X)
       return(list(Consensus=cr, Tau=0, Eltime=NA))

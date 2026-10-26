@@ -57,7 +57,7 @@ iwquickcons<-function (X,w, Wk = NULL, full = FALSE, PS = FALSE)
     
   } else{
     
-    X <- X[,which(w!=0)]
+    X <- X[,which(w!=0),drop=FALSE] #drop=FALSE: X stays a matrix also with one judge
     X <- t(apply(X,1,rank,ties.method ="min"))
     w <- w[which(w!=0)]
     # original ws_k <- matrix(,length(w),length(w))
@@ -78,8 +78,16 @@ iwquickcons<-function (X,w, Wk = NULL, full = FALSE, PS = FALSE)
   N = ncol(X)
   tic = proc.time()[3]
   if (M == 1) {
-    consensus = X
-    TauX = 1
+    #one judge: the median ranking is the ranking of the judge (with full = TRUE and
+    #ties, the ties are broken in column order, as in consrank); its TauX is computed
+    #below from the item-weighted combined input matrix
+    if (!is.null(Wk)) {
+      cij = iwcombinpmatr(X,w, matrix(Wk, ncol = 1))
+    } else {
+      cij = iwcombinpmatr(X,w)
+    }
+    consensus = onejudge(X, full)$consensus
+    howcons = 1
   }
   else {
     if (!is.null(Wk)) {
@@ -93,7 +101,7 @@ iwquickcons<-function (X,w, Wk = NULL, full = FALSE, PS = FALSE)
     }
     #trivial solution 1
     if (sum(cij == 0) == length(cij)) {
-      print("Combined Input Matrix contains only zeros: any ranking in the reference universe is a median ranking. The output contains the identity permutation")
+      message("Combined Input Matrix contains only zeros: any ranking in the reference universe is a median ranking. The output contains the identity permutation")
       cr <- matrix(seq(1:N),nrow=1)
       colnames(cr) <- colnames(X)
       return(list(Consensus=cr, Tau=0, Eltime=NA))
@@ -102,7 +110,7 @@ iwquickcons<-function (X,w, Wk = NULL, full = FALSE, PS = FALSE)
     if (full==FALSE){
       
       if (sum(sign(cij + diag(N))) == length(cij)) {
-        print("Combined Input Matrix contains only positive values: the median ranking is the all-tie solution")
+        message("Combined Input Matrix contains only positive values: the median ranking is the all-tie solution")
         cr <- matrix(rep(1,N),nrow=1)
         Sij = scorematrix(cr)
         if (!is(Wk,"NULL")) {
@@ -116,7 +124,9 @@ iwquickcons<-function (X,w, Wk = NULL, full = FALSE, PS = FALSE)
       }
     }
     
-    R = findconsensusBB(cij)
+    #starting solution without ties when full = TRUE (as in QuickConsn): before, it
+    #was computed with ties, and the solution kept them
+    R = findconsensusBB(cij, FULL = callfull)
     R1 = (N + 1) - R
     consensusA = BBconsensus(R, cij, FULL=callfull,PS=callps)$cons
     consensusB = BBconsensus(consensusA, cij, FULL=callfull,PS=callps)$cons

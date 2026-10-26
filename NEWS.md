@@ -121,6 +121,14 @@
 
 ## Changes
 
+* The notes "Combined Input Matrix contains only positive values: the median
+  ranking is the all-tie solution" and "Combined Input Matrix contains only
+  zeros: ..." of `consrank()` (all the algorithms) and `iwquickcons()` are now
+  messages (`message()`) instead of printed values (`print()`): they can be
+  suppressed with `suppressMessages()`, and they no longer appear as `[1] "..."`
+  in the output of the functions that call `consrank()` (e.g. the trees of
+  ConsRankClass). The results do not change.
+
 * `mcbo()` accepts `nbuckets` equal to the number of objects: the solution is
   then a full ranking, and the result is the one of `consrank(..., full = TRUE)`
   with the same algorithm and parameters (before: error "nbuckets must be less
@@ -205,6 +213,19 @@
   with 500 objects and from 14.6 to 4.0 seconds with 1000 objects.
 
 ## Bug fixes
+
+* `iwquickcons()` with a single judge (a matrix with one row) stopped with an
+  error ("dim(X) must have a positive length" when `w` is a vector; "object
+  'cij' not found" otherwise). Now the median ranking is the ranking of the
+  judge (with `full = TRUE` and ties, the ties are broken in the order of the
+  columns, as in `consrank()`), with its item-weighted TauX. Results with two
+  or more judges do not change.
+* `iwquickcons()` with `full = TRUE` could return a ranking with ties: the
+  starting solution of the search was computed with ties (without the option
+  `FULL`, which `consrank(algorithm = "quick")` uses) and the search kept them.
+  Now the starting solution has no ties, as in `consrank()`, and the solution is
+  a full ranking (on Univranks with item weights, the same TauX as the best of
+  all the 720 permutations). With `full = FALSE` the results do not change.
 
 * `consrank()` with a single judge: with `algorithm = "BB"` and `full = TRUE`
   the TauX returned was 0 instead of 1; with `algorithm = "decor"` the function
