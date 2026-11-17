@@ -1,3 +1,23 @@
+# ConsRank 3.1.1
+
+## Bug fixes
+
+* `mcbo(algorithm = "BB")`: the branch-and-bound algorithm for the median
+  constrained bucket order with `nbuckets` buckets did not always return the
+  optimal solution. Three corrections:
+  - a partial solution with k objects in nbk buckets is now discarded only if it
+    cannot be completed with exactly `nbuckets` buckets, i.e. if
+    nbk > nbuckets or nbk + (N - k) < nbuckets. The previous rule also
+    discarded the partial solutions with fewer than `nbuckets` - 2 buckets,
+    which could remove the optimal solution when it has a large bucket among
+    the first objects inserted (e.g. N = 8, `nbuckets` = 4, optimal bucket
+    sizes (5, 1, 1, 1): optimum missed in 35 out of 40 test data sets);
+  - the threshold of the search is now the penalty of a feasible solution;
+  - if no branch survives, the best known solution is returned.
+  The corrected algorithm was checked against the exhaustive enumeration of all
+  the bucket orders with `nbuckets` buckets (167 data sets with N = 6 to 9,
+  with and without ties): optimal in all of them.
+
 # ConsRank 3.1
 
 ## New features

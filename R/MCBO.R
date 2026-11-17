@@ -341,10 +341,19 @@ consrankBBbuckets <- function(cij, buckets, nj, Wk, ps, use_cpp) {
   
   # Phase 1: Find initial approximation
   CA <- BBconsensusBuckts(R_init, cij, ps, buckets, use_cpp)
-  Po <- CA$pen
-  
+  # The threshold of the branch-and-bound must be the penalty of a FEASIBLE
+  # solution (exactly 'buckets' buckets): the full penalty of the phase-1
+  # solution (or of R_init, which has 'buckets' buckets by construction, if
+  # the phase-1 solution has a different number of buckets). The sum of the
+  # increments computed in phase 1 (CA$pen) is not guaranteed to be one. The
+  # penalty of the branch-and-bound (sum of the increments PenaltyBB2) is half
+  # of sum|c_ij| - sum c_ij s_ij.
+  inc <- matrix(CA$cons, nrow = 1)
+  if (length(unique(as.numeric(inc))) != buckets) inc <- R_init
+  Po <- (sum(abs(cij)) - sum(cij * scorematrix(inc, use_cpp = use_cpp))) / 2
+
   # Phase 2: Refine with full BB
-  consensus <- BBconsensus3(R_init, cij, Po, ps, buckets, use_cpp)
+  consensus <- BBconsensus3(R_init, cij, Po, ps, buckets, use_cpp, incumbent = inc)
   
   # Calculate Tau
   if (nrow(consensus) > 1) {
@@ -374,7 +383,7 @@ consrankBBbuckets <- function(cij, buckets, nj, Wk, ps, use_cpp) {
 # BBconsensus3 - MAIN BB LOOP (ORIGINAL LOGIC)
 # ══════════════════════════════════════════════════════════════════════════
 
-BBconsensus3 <- function(RR, cij, Po, PS, buckets, use_cpp) {
+BBconsensus3 <- function(RR, cij, Po, PS, buckets, use_cpp, incumbent) {
   
   CR <- RR
   a <- t(matrix(sort(RR)))
@@ -421,24 +430,16 @@ BBconsensus3 <- function(RR, cij, Po, PS, buckets, use_cpp) {
         
         if (!is.null(R) && length(R) > 0) {
           
-          rattappo <- matrix(0, nrow(R), 1)
-          
-          if (k <= buckets) {
-            # Early phase: remove if > buckets
-            for (L in 1:nrow(R)) {
-              rattappo[L, 1] <- ifelse(length(table(R[L, ord[b]])) > buckets, 1, 0)
-            }
-            
-          } else {
-            # Late phase: remove if > buckets OR < (buckets-2)
-            for (L in 1:nrow(R)) {
-              rattappo[L, 1] <- ifelse(
-                length(table(R[L, ord[b]])) > buckets | 
-                  length(table(R[L, ord[b]])) < (buckets - 2),
-                1, 0
-              )
-            }
-          }
+          # A partial ranking of the first k objects with nbk buckets can be
+          # completed into a ranking with exactly 'buckets' buckets if and only
+          # if nbk <= buckets (adding objects never merges buckets) and
+          # nbk + (N - k) >= buckets (each of the N - k objects still to be
+          # placed can open at most one new bucket). The branches that violate
+          # one of the two conditions are removed. (Before ConsRank 3.1.1 the
+          # branches with fewer than buckets - 2 buckets were removed, which
+          # could remove the branch of the optimum.)
+          nbk <- apply(R[, ord[b], drop = FALSE], 1, function(x) length(unique(x)))
+          rattappo <- matrix(as.numeric(nbk > buckets | nbk + (N - k) < buckets), ncol = 1)
           
           # Apply filter
           if (sum(rattappo > 0)) {
@@ -477,6 +478,11 @@ BBconsensus3 <- function(RR, cij, Po, PS, buckets, use_cpp) {
       if (!is.null(KR.R) && length(KR.R) > 0) {
         BR.R <- KR.R
         BR.P <- matrix(KR.P, ncol = 1)
+      } else {
+        # no branch can be completed with a penalty not larger than Po: the
+        # incumbent (penalty Po) is optimal
+        BR.R <- NULL
+        break
       }
       
       if (PS && !is.null(BR.R)) {
@@ -489,6 +495,13 @@ BBconsensus3 <- function(RR, cij, Po, PS, buckets, use_cpp) {
     # CHECK AND CONVERGENCE
     # ═══════════════════════════════════════════════════════════════
     
+    # no branch survived: the incumbent is the solution
+    if (is.null(BR.R)) {
+      CR <- incumbent
+      WCi <- 0
+      next
+    }
+
     # Remove solutions with wrong number of buckets
     if (!is.null(BR.R) && nrow(BR.R) > 0) {
       checklength <- which(apply(BR.R, 1, function(x) length(table(x))) != buckets)
@@ -520,6 +533,7 @@ BBconsensus3 <- function(RR, cij, Po, PS, buckets, use_cpp) {
       WCi <- 1
       lambda <- lambda + 1
       nRR <- matrix(BR.R[SSP[1], ], 1, N)
+      incumbent <- nRR                    # new incumbent (penalty Po = MinP)
       BR.R <- nRR
       BR.P <- 0
       a <- t(matrix(sort(BR.R)))
