@@ -76,6 +76,10 @@ combines three ingredients:
 }
 The local search and the optimal tie partitioning are alternated until no
 improvement, from each starting solution; the best solution(s) are returned.
+When ties are allowed (\code{full = FALSE}), a first phase runs the local
+search without ties from each starting solution (ties broken) and adds the
+resulting full rankings to the starting solutions: the result is never worse
+than the one with \code{full = TRUE}.
 The procedure is deterministic: no random starting solutions are used.
 
 Instead of the data X, the combined input matrix cij can be given, together

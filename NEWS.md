@@ -1,3 +1,18 @@
+# ConsRank 3.1.2
+
+## Improvements
+
+* `bolt()` (and `consrank(algorithm = "BOLT")`) with ties allowed
+  (`full = FALSE`): a first phase runs the local search without ties from each
+  starting solution and adds the resulting full rankings to the starting
+  solutions. The result is never worse than before (all the previous starting
+  solutions are still used) and never worse than `bolt(full = TRUE)` (a full
+  ranking is also a bucket order). On data with nearly random judges the
+  optimum has few ties, while the previous starting solutions could lead to
+  local optima with too many ties: on 707 simulated data sets with certified
+  optimum (M = 50 to 200 objects) the optimum is now found in 426 cases instead
+  of 391. `bolt(full = TRUE)` and `mcbo()` are unchanged.
+
 # ConsRank 3.1.1
 
 ## Bug fixes

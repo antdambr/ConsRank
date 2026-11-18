@@ -51,6 +51,10 @@
 #' }
 #' The local search and the optimal tie partitioning are alternated until no
 #' improvement, from each starting solution; the best solution(s) are returned.
+#' When ties are allowed (\code{full = FALSE}), a first phase runs the local
+#' search without ties from each starting solution (ties broken) and adds the
+#' resulting full rankings to the starting solutions: the result is never worse
+#' than the one with \code{full = TRUE}.
 #' The procedure is deterministic: no random starting solutions are used.
 #'
 #' Instead of the data X, the combined input matrix cij can be given, together
@@ -128,6 +132,16 @@ boltcij <- function(cij, nj, full = FALSE, otp = TRUE, seeds = NULL, ps = FALSE)
   N <- ncol(cij)
   S <- boltseeds(cij, seeds, full)
   tol <- 1e-10 * max(1, sum(abs(cij)))
+  if (!full) {
+    # first phase: from each seed (ties broken) the local search without ties
+    # gives a full ranking; these full rankings are added to the seeds, so that
+    # the result is never worse than the one with full = TRUE (on flat data the
+    # optimum has few ties, and the original seeds can lead to local optima
+    # with too many ties)
+    Sf <- boltseeds(cij, seeds, full = TRUE)
+    Rf <- bolt_run_impl(t(Sf), cij, TRUE, otp, tol)$rankings
+    S <- unique(rbind(S, t(apply(Rf, 2, boltdense))))
+  }
   res <- bolt_run_impl(t(S), cij, full, otp, tol)
   top <- which(res$value >= max(res$value) - tol)
   cons <- unique(reordering(t(res$rankings[, top, drop = FALSE])))
