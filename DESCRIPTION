@@ -3,8 +3,8 @@ Type: Package
 Title: Compute the Median Ranking(s) According to the Kemeny's Axiomatic
     Approach
 Version: 3.1.2
-Date: 2026-11-18
-Authors@R: c(person("Antonio", "D'Ambrosio", role = c("aut", "cre"), email = "antdambr@unina.it"), person("Sonia", "Amodio", role = "ctb"), person("Giulio", "Mazzeo", role = "ctb"), person("Alessandro", "Albano", role = "ctb"), person("Antonella", "Plaia", role = "ctb"), person("Maurizio", "Romano", role = "ctb"))
+Date: 2026-11-24
+Authors@R: c(person("Antonio", "D'Ambrosio", role = c("aut", "cre"), email = "antdambr@unina.it"), person("Sonia", "Amodio", role = "ctb"), person("Giulio", "Mazzeo", role = "ctb"), person("Alessandro", "Albano", role = "ctb"), person("Antonella", "Plaia", role = "ctb"), person("Maurizio", "Romano", role = "ctb"), person("Luca", "Coraggio", role = "ctb"))
 Maintainer: Antonio D'Ambrosio <antdambr@unina.it>
 Depends:
     R (>= 4.1.0)
@@ -31,7 +31,8 @@ Description: Compute the median ranking according to the Kemeny's axiomatic appr
     Amodio, S., D'Ambrosio, A., and Siciliano R. (2016) <doi:10.1016/j.ejor.2015.08.048>; 
     D'Ambrosio, A., Mazzeo, G., Iorio, C., and Siciliano, R. (2017) <doi:10.1016/j.cor.2017.01.017>;
     Albano, A., and Plaia, A. (2021) <doi:10.1285/i20705948v14n1p117>;
-    D'Ambrosio, A., Iorio, C., Staiano, M. and Siciliano, R (2019) <doi:10.1007/s00180-018-0858-z>.
+    D'Ambrosio, A., Iorio, C., Staiano, M. and Siciliano, R (2019) <doi:10.1007/s00180-018-0858-z>;
+    Romano, M., Coraggio, L., Conversano, C., and D'Ambrosio, A. (2026) <doi:10.48550/arXiv.2611.28925>.
 License: GPL-3
 Encoding: UTF-8
 Config/roxygen2/version: 8.1.0

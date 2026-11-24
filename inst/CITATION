@@ -1,0 +1,30 @@
+citHeader("To cite ConsRank in publications use:")
+
+bibentry(
+  bibtype  = "Misc",
+  title    = "Kemeny median rankings with ties under constraints on the buckets",
+  author   = c(person("Maurizio", "Romano"),
+               person("Luca", "Coraggio"),
+               person("Claudio", "Conversano"),
+               person("Antonio", "D'Ambrosio")),
+  year     = "2026",
+  eprint   = "2611.28925",
+  archivePrefix = "arXiv",
+  primaryClass  = "stat.CO",
+  doi      = "10.48550/arXiv.2611.28925",
+  url      = "https://arxiv.org/abs/2611.28925",
+  textVersion = paste(
+    "Romano, M., Coraggio, L., Conversano, C., and D'Ambrosio, A. (2026).",
+    "Kemeny median rankings with ties under constraints on the buckets.",
+    "arXiv preprint arXiv:2611.28925. doi:10.48550/arXiv.2611.28925"
+  )
+)
+
+bibentry(
+  bibtype  = "Manual",
+  title    = "ConsRank: Compute the Median Ranking(s) According to the Kemeny's Axiomatic Approach",
+  author   = person("Antonio", "D'Ambrosio"),
+  year     = "2026",
+  note     = paste("R package version", meta$Version),
+  url      = "https://CRAN.R-project.org/package=ConsRank"
+)
