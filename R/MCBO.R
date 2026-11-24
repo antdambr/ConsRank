@@ -47,7 +47,10 @@
 #' @param ff Numeric. Scaling rate for mutation in "decor". Must be in [0,1]. Default 0.4
 #' @param cr Numeric. Crossover range for "decor". Must be in [0,1]. Default 0.8
 #' @param use_cpp Logical. If TRUE (default), use optimized C++ implementations 
-#'   for core functions (combinpmatr, scorematrix, PenaltyBB2, etc.)
+#'   for core functions (combinpmatr, scorematrix, PenaltyBB2, etc.).
+#'   Ignored with algorithm = "BOLT", which is implemented in C++ only. With
+#'   algorithm = "quick", the optimal tie partitioning step (taken from BOLT) is
+#'   always computed in C++.
 #' @param maxjudges For "BOLT" only: maximum number of distinct rankings of the
 #'   judges used as starting solutions, the most frequent first. Default Inf (all
 #'   of them); 0 uses only the starting solutions computed from the combined input

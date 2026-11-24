@@ -46,7 +46,7 @@ consrank(
 
 \item{proc}{For BB algorithm only: proc=TRUE allows the branch and bound algorithm to work in difficult cases, i.e. when the number of objects is larger than 15 or 25. proc=FALSE is the default option}
 
-\item{use_cpp}{Logical. If TRUE (default), uses C++ implementation for faster computation. If FALSE, uses the R implementation.}
+\item{use_cpp}{Logical. If TRUE (default), uses C++ implementation for faster computation. If FALSE, uses the R implementation. Ignored with algorithm = "BOLT", which is implemented in C++ only.}
 
 \item{otp}{For BOLT algorithm only: if TRUE (default), the optimal tie partitioning step is used (see \code{\link{bolt}}).}
 

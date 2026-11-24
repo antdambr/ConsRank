@@ -61,7 +61,10 @@ generations without improvement. Default 100}
 \item{cr}{Numeric. Crossover range for "decor". Must be in [0,1]. Default 0.8}
 
 \item{use_cpp}{Logical. If TRUE (default), use optimized C++ implementations 
-for core functions (combinpmatr, scorematrix, PenaltyBB2, etc.)}
+for core functions (combinpmatr, scorematrix, PenaltyBB2, etc.).
+Ignored with algorithm = "BOLT", which is implemented in C++ only. With
+algorithm = "quick", the optimal tie partitioning step (taken from BOLT) is
+always computed in C++.}
 
 \item{maxjudges}{For "BOLT" only: maximum number of distinct rankings of the
 judges used as starting solutions, the most frequent first. Default Inf (all

@@ -13,7 +13,7 @@
 #' @param ff For DECOR algorithm only: the scaling rate for mutation. Must be in [0,1]. ff=0.4 is the default option.
 #' @param cr For DECOR algorithm only: the crossover range. Must be in [0,1]. cr=0.9 is the default option.
 #' @param proc For BB algorithm only: proc=TRUE allows the branch and bound algorithm to work in difficult cases, i.e. when the number of objects is larger than 15 or 25. proc=FALSE is the default option
-#' @param use_cpp Logical. If TRUE (default), uses C++ implementation for faster computation. If FALSE, uses the R implementation.
+#' @param use_cpp Logical. If TRUE (default), uses C++ implementation for faster computation. If FALSE, uses the R implementation. Ignored with algorithm = "BOLT", which is implemented in C++ only.
 #' @param otp For BOLT algorithm only: if TRUE (default), the optimal tie partitioning step is used (see \code{\link{bolt}}).
 #' @param maxjudges For BOLT algorithm only: maximum number of distinct rankings of the judges used as starting solutions (see \code{\link{bolt}}). Default Inf (all of them).
 #' @param cij The combined input matrix (m by m, see \code{\link{combinpmatr}}), to be given instead of X. All the algorithms depend on the data only through this matrix (Emond and Mason, 2002). With cij, the argument wk is ignored and the rankings of the judges are not used as starting solutions by BOLT
